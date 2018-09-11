@@ -53,12 +53,13 @@ WIDTH = 1280
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--video', type=str, default='data/test.mp4', help='input video')
-parser.add_argument('--load', type=bool, default=False, help='Load last weight')
+parser.add_argument('--load', type=bool, default=True, help='Load last weight')
 parser.add_argument('--steps', type=int, default=200, help='Desired train steps, skips frames if smaller than video')
 parser.add_argument('--epochs', type=int, default=100, help='Training epochs')
 args = parser.parse_args()
 
 LOAD_MODEL = args.load
+print('Load model = {}'.format(LOAD_MODEL))
 
 # 시작시 카메라 흔들림 때문에 200프레임을 스킵합니다.
 INIT_SKIP_FRAME = 200
@@ -67,7 +68,7 @@ print('Training video: {}, you can set manually "--video PATH"'.format(args.vide
 vidcap = cv2.VideoCapture(args.video)
 
 total = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
-skip = int(total / args.steps)
+skip = int(total / args.steps+1)
 
 print('Total frames: {}, Desired steps: {}, Skip frames: {}, Init skip: {}'.format(total, args.steps, skip, INIT_SKIP_FRAME))
 print('Decoding video and loading to memory...')
@@ -163,11 +164,11 @@ else:
 
     model.summary()
 
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
 
-    with open('models/model.json', 'w') as f:
-        f.write(model.to_json())
-        print('Saved Model Structure')
+with open('models/model.json', 'w') as f:
+    f.write(model.to_json())
+    print('Saved Model Structure')
 
 time = datetime.datetime.now().strftime('%m-%d, %H-%M-%S')
 path = './logs/{}'.format(time)

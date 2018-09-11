@@ -77,7 +77,8 @@ for i in tqdm(range(0, total)):
         result = result.astype(np.uint8)
 
         vis = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)  # to white color
-        vis[:, :, 0] = 0  # remove blue channel
+        _, vis = cv2.threshold(vis, 128, 255, cv2.THRESH_TOZERO)
+        vis[:, :, 1] = 0  # remove green channel
         vis[:, :, 2] = 0  # remove red channel
         vis = cv2.resize(vis, (1280, 720), interpolation=cv2.INTER_LINEAR)  # resize 15x8 to 1280x720
         org = cv2.resize(image, (1280, 720))

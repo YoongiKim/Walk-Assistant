@@ -9,7 +9,7 @@ TensorFlow Korea 참고: https://www.facebook.com/groups/TensorFlowKR/permalink/
 
 오픈소스로 공개함으로써 이 프로젝트가 하루빨리 완성될 수 있으면 좋겠습니다.
 
-학습 데이터가 절대적으로 부족합니다!
+학습 데이터가 절대적으로 부족합니다! 대신 학습 데이터의 품질이 떨어지면 정확도는 기하급수적으로 감소합니다.
 
 코드에 기여하지 않더라도 단순히 걸어다니면서 찍은 동영상을 공유하는것 만으로도 큰 도움이 됩니다!
 
@@ -24,7 +24,6 @@ TensorFlow Korea 참고: https://www.facebook.com/groups/TensorFlowKR/permalink/
 
 ![concept](./img/concept.jpg)
 
-![safe_zone_excel](./img/safe_zone_excel.jpg)
 
 # 사용법
 ## 학습
@@ -36,7 +35,7 @@ optional arguments:
 
 --video VIDEO    input video 학습할 동영상 경로를 지정합니다. (기본값: data/test.mp4)
 
---load LOAD      Load last weight 학습을 이어서 할지를 결정합니다. (기본값: False)
+--load LOAD      Load last weight 학습을 이어서 할지를 결정합니다. (기본값: True)
 
 --steps STEPS    Desired train steps, skips frames if smaller than video
 
