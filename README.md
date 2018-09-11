@@ -6,6 +6,7 @@
 TensorFlow Korea 참고: https://www.facebook.com/groups/TensorFlowKR/permalink/748798628794531/?__xts__[0]=68.ARA6-n9squLyI-_Kj09tjlLi3v7nQOcgWBYdqUGUTIlLm38kzfLx1GGUdcfjfKrC9aX74RGXWMRYUo-yVboKFj4_zZSqjihI5YR9v5K-LPn5hss2K50S5W5DKAqhS3vDoyGzNtUdDpY3ltq2T92sLsOa4LDF2hbogJkq3lE2TKDNMBwG06OA&__tn__=CH-R
 
 
+
 오픈소스로 공개함으로써 이 프로젝트가 하루빨리 완성될 수 있으면 좋겠습니다.
 
 학습 데이터가 절대적으로 부족합니다!
@@ -43,7 +44,7 @@ optional arguments:
 
 일정 프레임 단위로 건너뛰며 학습합니다.
 
-  --epochs EPOCHS  Training epochs 몇번 학습할지 지정합니다.
+--epochs EPOCHS  Training epochs 몇번 학습할지 지정합니다.
 
 
 
