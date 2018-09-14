@@ -94,4 +94,4 @@ for i in tqdm(range(0, total)):
         for j in range(args.skip+1):
             success, image = vidcap.read()
 
-print('Done')
+print('Saved to {}'.format(args.out))

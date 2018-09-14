@@ -91,9 +91,6 @@ print('Loaded input images')
 X = np.array(X)
 print(len(X))
 
-# 안전 범위
-# safe_zone 엑셀 공식 -> 중심에서 멀어질수록 낮아짐
-# = MAX(0, 1 - SQRT(ABS((COLUMN($H$8)-COLUMN()))^2.8+ABS((ROW($H$8)-ROW()))^2) / SQRT((COLUMN($H$8)-COLUMN($A$8))^2+(ROW($H$8)-ROW($A$8))^2))
 
 def to_categorical_custom(Y):
     # softmax를 위해 실수 범위에서 one-hot 인코딩
