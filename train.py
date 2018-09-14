@@ -30,10 +30,16 @@ from tqdm import tqdm, trange
 from filter import Filter
 from model import MyModel
 
-HEIGHT = 288
-WIDTH = 512
-KERNEL = 40
-STRIDE = 40
+
+# HEIGHT = 288
+# WIDTH = 512
+# KERNEL = 40
+# STRIDE = 40
+
+HEIGHT = 720
+WIDTH = 1280
+KERNEL = 80
+STRIDE = 80
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--video', type=str, default='data/test.mp4', help='input video')
@@ -72,7 +78,7 @@ for i in range(model.epoch+1, args.epochs):
 
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 model.train_on_batch(np.array([img]), np.array([y]))
-
+                
                 if step % 50 == 0:
                     model.save_weights(i)
 

@@ -12,7 +12,7 @@ class Filter:
         # 이미지를 작게 해서 처리속도 향상
         img = cv2.resize(img, (480, 270))
         blur = Filter.blur(img)
-
+        
         labels = Filter.color_quantization(blur, self.n_cluster, 1)
         crop = Filter.roi(labels, roi_w, roi_h, img, show=show)
         # cv2.imshow('crop', crop)
@@ -24,7 +24,7 @@ class Filter:
 
         match = Filter.binary_match(labels, main_colors)
 
-        match = Filter.remove_small_objects(match, 2000)
+        match = Filter.remove_small_objects(match, 3000)
         if show:
             cv2.imshow('match', match)
 
