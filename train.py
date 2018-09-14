@@ -47,6 +47,7 @@ from keras.callbacks import TensorBoard, ModelCheckpoint
 from keras.callbacks import EarlyStopping
 import argparse
 from tqdm import tqdm
+from filter import Filter
 
 HEIGHT = 720
 WIDTH = 1280

@@ -19,11 +19,16 @@ class Filter:
         main_colors = self.get_main_colors(crop)
         print(main_colors)
 
-        match = Filter.binary_match(labels, main_colors)
+        res = Filter.binary_match(labels, main_colors)
 
-        match = Filter.remove_small_objects(match, 2000)
+        res = Filter.remove_small_objects(res, 2000)
+        cv2.imshow('filter', res)
 
-        return match
+        activation = cv2.resize(res, (128, 64))
+        cv2.imshow('result', cv2.resize(activation, (1280, 720)))
+        cv2.waitKey(0)
+
+        return res
 
     def get_main_colors(self, img):
         count = [0 for i in range(self.n_cluster)]
@@ -103,5 +108,3 @@ if __name__ == '__main__':
     img = cv2.imread('data/test.png')
     filter = Filter()
     match = filter.filter_sidewalk(img)
-    cv2.imshow('res', match)
-    cv2.waitKey(0)
