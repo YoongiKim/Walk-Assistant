@@ -47,7 +47,7 @@ from filter import Filter
 
 
 class MyModel:
-    def __init__(self, load, height, width):
+    def __init__(self, load, height, width, kernel, stride):
         self.load = load
         self.height = height
         self.width = width
@@ -58,7 +58,7 @@ class MyModel:
         if self.load:
             self.model = self.load_model()
         else:
-            self.model = self.build_model()
+            self.model = self.build_model(kernel, stride)
 
         opt = Adam(lr=0.0001)
         self.model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['acc'])

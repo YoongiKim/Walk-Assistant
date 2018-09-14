@@ -53,10 +53,12 @@ print('Training video: {}, you can set manually "--video PATH"'.format(args.vide
 LOADMODEL = True if str(args.load).upper() == 'TRUE' else False
 print('Load model = {}'.format(LOADMODEL))
 
-model = MyModel(LOADMODEL, HEIGHT, WIDTH)
+model = MyModel(LOADMODEL, HEIGHT, WIDTH, KERNEL, STRIDE)
 model.prepare_train()
 
-filter = Filter(n_cluster=32, zone_h=HEIGHT, zone_w=WIDTH)
+zone_h = int((HEIGHT-KERNEL)/STRIDE+1)
+zone_w = int((WIDTH-KERNEL)/STRIDE+1)
+filter = Filter(n_cluster=32, zone_h=zone_h, zone_w=zone_w)
 
 vidcap = cv2.VideoCapture(args.video)
 total = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
