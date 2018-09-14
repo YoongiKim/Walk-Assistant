@@ -2,33 +2,47 @@ import cv2
 import numpy as np
 
 class Filter:
-    def __init__(self, n_cluster=16):
+    def __init__(self, n_cluster=32, zone_h=17, zone_w=31):
         self.n_cluster = n_cluster
         self.colors = None
+        self.zone_h = zone_h
+        self.zone_w = zone_w
 
-    def filter_sidewalk(self, img):
+    def filter_sidewalk(self, img, show=False):
         # 이미지를 작게 해서 처리속도 향상
-        img = cv2.resize(img, (480, 270), interpolation=cv2.INTER_LINEAR)
+        img = cv2.resize(img, (480, 270), interpolation=cv2.INTER_AREA)
+        if show:
+            cv2.imshow('org', img)
         img = Filter.blur(img)
 
         labels = Filter.color_quantization(img, self.n_cluster, 10)
-        crop = Filter.roi(labels)
+        crop = Filter.roi(labels, 100, 100)
+        # cv2.imshow('crop', crop)
 
         self.colors = set(crop.flatten())
 
         main_colors = self.get_main_colors(crop)
-        print(main_colors)
+        # print(main_colors)
 
-        res = Filter.binary_match(labels, main_colors)
+        match = Filter.binary_match(labels, main_colors)
 
-        res = Filter.remove_small_objects(res, 2000)
-        cv2.imshow('filter', res)
+        match = Filter.remove_small_objects(match, 2000)
+        if show:
+            cv2.imshow('match', match)
 
-        activation = cv2.resize(res, (128, 64))
-        cv2.imshow('result', cv2.resize(activation, (1280, 720)))
-        cv2.waitKey(0)
+        activation = cv2.resize(match, (self.zone_w, self.zone_h), interpolation=cv2.INTER_AREA)
+        if show:
+            cv2.imshow('result', cv2.resize(activation, (480, 270)))
 
-        return res
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            print('User Interrupted')
+            exit(1)
+        # cv2.waitKey(0)
+
+        np_arr = np.array(activation).reshape(self.zone_h, self.zone_w, 1)
+        np_arr = np_arr / 255.0
+
+        return np_arr
 
     def get_main_colors(self, img):
         count = [0 for i in range(self.n_cluster)]
@@ -95,16 +109,18 @@ class Filter:
         return cv2.bilateralFilter(img, 9, 75, 75)
 
     @staticmethod
-    def roi(img):
+    def roi(img, width, height):
         h, w, c = img.shape
         x_center = int(w/2)
-        roi_size = 300
+        roi_size = width
         x_start = int(x_center - roi_size/2)
         x_end = int(x_center + roi_size/2)
-        crop = img[x_start:x_end, h - 100:h]
+        crop = img[x_start:x_end, h-height:h]
         return crop
 
 if __name__ == '__main__':
     img = cv2.imread('data/test.png')
     filter = Filter()
-    match = filter.filter_sidewalk(img)
+    activation = filter.filter_sidewalk(img)
+    cv2.imshow('result', cv2.resize(activation, (480, 270)))
+    cv2.waitKey(0)
