@@ -8,15 +8,13 @@ class Filter:
         self.zone_h = zone_h
         self.zone_w = zone_w
 
-    def filter_sidewalk(self, img, show=False):
+    def filter_sidewalk(self, img, show=False, roi_w=100, roi_h=50):
         # 이미지를 작게 해서 처리속도 향상
         img = cv2.resize(img, (480, 270))
-        if show:
-            cv2.imshow('org', img)
-        img = Filter.blur(img)
-
-        labels = Filter.color_quantization(img, self.n_cluster, 10)
-        crop = Filter.roi(labels, 100, 100)
+        blur = Filter.blur(img)
+        
+        labels = Filter.color_quantization(blur, self.n_cluster, 1)
+        crop = Filter.roi(labels, roi_w, roi_h, img, show=show)
         # cv2.imshow('crop', crop)
 
         self.colors = set(crop.flatten())
@@ -109,13 +107,16 @@ class Filter:
         return cv2.bilateralFilter(img, 9, 75, 75)
 
     @staticmethod
-    def roi(img, width, height):
-        h, w, c = img.shape
+    def roi(labels, width, height, original_img, show=False):
+        h, w, c = labels.shape
         x_center = int(w/2)
         roi_size = width
         x_start = int(x_center - roi_size/2)
         x_end = int(x_center + roi_size/2)
-        crop = img[x_start:x_end, h-height:h]
+        if show:
+            rect = cv2.rectangle(original_img.copy(), (x_start, h - height), (x_end, h), (0, 255, 255), 2)
+            cv2.imshow('roi', rect)
+        crop = labels[h - height:h, x_start:x_end]
         return crop
 
 if __name__ == '__main__':

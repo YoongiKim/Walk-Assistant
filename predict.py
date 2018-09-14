@@ -35,18 +35,21 @@ import argparse
 from tqdm import tqdm
 from filter import Filter
 
+HEIGHT = 288
+WIDTH = 512
+
 parser = argparse.ArgumentParser()
 parser.add_argument('video', type=str, help='input video path')
 parser.add_argument('--out', type=str, default='output/output.avi', help='output video save path')
-parser.add_argument('--show', type=bool, default=False, help='show real time video')
+parser.add_argument('--show', type=str, default='False', help='show real time video')
 parser.add_argument('--skip', type=int, default=1, help='skip frame to speed up')
 args = parser.parse_args()
 
+SHOW = True if str(args.show).upper() == 'TRUE' else False
+
 weight_files = glob.glob('models/weight*.h5')
 last_file = max(weight_files, key=os.path.getctime)
-
 file_name = last_file.split('/')[-1]
-
 print('Starting from {}'.format(file_name))
 
 with CustomObjectScope({'relu6': tf.nn.relu6, 'DepthwiseConv2D': keras.layers.DepthwiseConv2D, 'tf': tf}):
@@ -65,25 +68,25 @@ success, image = vidcap.read()
 for i in tqdm(range(0, total)):
     if success:
         img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, (1280, 720))
+        img = cv2.resize(img, (WIDTH, HEIGHT))
         img = np.array([img])
-
+        
         result = model.predict(img)[0]  # (batch, 8, 15, 2)
         result = result[:, :, 1]  # (8, 15, 1)
         result *= 255  # to image 8 bit scale
         result = result.astype(np.uint8)
         _, result = cv2.threshold(result, 200, 255, cv2.THRESH_TOZERO)
         result = Filter.remove_small_objects(result, 5)
-
+        
         vis = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)  # to white color
         vis[:, :, 0] = 0  # remove blue channel
         vis[:, :, 2] = 0  # remove red channel
         vis = cv2.resize(vis, (1280, 720), interpolation=cv2.INTER_LINEAR)  # resize 15x8 to 1280x720
         org = cv2.resize(image, (1280, 720))
-        added = cv2.add(org, vis)  # combine input, output
+        added = cv2.add(org, res)  # combine input, output
 
         out.write(added)  # save video frame
-        if args.show:
+        if SHOW:
             cv2.imshow('result', added)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 print('User Interrupted')

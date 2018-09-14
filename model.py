@@ -19,8 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import tensorflow as tf
 from keras import Sequential
 from keras import layers
-from keras.layers import TimeDistributed, Reshape, Conv2D, MaxPool2D, Lambda, Input, Dense, GlobalAveragePooling2D
+from keras.layers import TimeDistributed, Reshape, Conv2D, MaxPool2D, UpSampling2D, Lambda, Input, Dense, GlobalAveragePooling2D
 from keras.layers import BatchNormalization, Activation, DepthwiseConv2D, Bidirectional
+from keras.layers.core import Activation, Reshape, Permute
 from keras.optimizers import Adam
 from keras import Model
 from keras.applications.mobilenetv2 import MobileNetV2, preprocess_input
@@ -46,7 +47,7 @@ from filter import Filter
 
 
 class MyModel:
-    def __init__(self, load, height, width, kernel, stride):
+    def __init__(self, load, height, width):
         self.load = load
         self.height = height
         self.width = width
@@ -57,7 +58,7 @@ class MyModel:
         if self.load:
             self.model = self.load_model()
         else:
-            self.model = self.make_model(kernel=kernel, stride=stride)
+            self.model = self.build_model()
 
         opt = Adam(lr=0.0001)
         self.model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['acc'])
@@ -70,8 +71,8 @@ class MyModel:
         Y = self.to_categorical_custom(Y)
         self.loss, self.acc = self.model.train_on_batch(X, Y)
 
-    def save_weights(self):
-        self.model.save_weights('models/weight.h5')
+    def save_weights(self, epoch):
+        self.model.save_weights('models/weight.{}-{:.3f}.h5'.format(epoch, self.acc))
         print('Saved model successfully')
 
     def load_model(self):
@@ -93,7 +94,7 @@ class MyModel:
 
         return model
 
-    def make_model(self, kernel=120, stride=80):
+    def build_model(self, kernel=120, stride=80):
         i = Input(batch_shape=(None, self.height, self.width, 3))
         x = Lambda(lambda x: tf.extract_image_patches(
             x, ksizes=[1, kernel, kernel, 1], strides=[1, stride, stride, 1], rates=[1, 1, 1, 1], padding='VALID'))(i)
@@ -145,3 +146,128 @@ class MyModel:
         # checkpoint_path = 'models' + '/weight.{epoch:02d}-{acc:.2f}.h5'
         # checkpoint = ModelCheckpoint(checkpoint_path, monitor='acc', save_best_only=False, mode='auto')
         pass
+
+    def build_segnet(self):
+        img_w = self.width
+        img_h = self.height
+        n_labels = 2
+        kernel = (3, 3)
+
+        encoding_layers = [
+            Conv2D(64, kernel, padding='same', input_shape=(img_h, img_w, 3)),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(64, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            MaxPool2D(),
+
+            Conv2D(128, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(128, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            MaxPool2D(),
+
+            Conv2D(256, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(256, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(256, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            MaxPool2D(),
+
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            MaxPool2D(),
+
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            MaxPool2D(),
+        ]
+
+        autoencoder = Sequential()
+        autoencoder.encoding_layers = encoding_layers
+
+        for l in autoencoder.encoding_layers:
+            autoencoder.add(l)
+            print(l.input_shape, l.output_shape, l)
+
+        decoding_layers = [
+            UpSampling2D(),
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+
+            UpSampling2D(),
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(512, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(256, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+
+            UpSampling2D(),
+            Conv2D(256, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(256, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(128, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+
+            UpSampling2D(),
+            Conv2D(128, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(64, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+
+            UpSampling2D(),
+            Conv2D(64, kernel, padding='same'),
+            BatchNormalization(),
+            Activation('relu'),
+            Conv2D(n_labels, (1, 1), padding='valid'),
+            BatchNormalization(),
+        ]
+        autoencoder.decoding_layers = decoding_layers
+        for l in autoencoder.decoding_layers:
+            autoencoder.add(l)
+            print(l.input_shape, l.output_shape, l)
+
+        autoencoder.add(Reshape((n_labels, img_h * img_w)))
+        autoencoder.add(Permute((2, 1)))
+        autoencoder.add(Reshape((img_h, img_w, n_labels)))
+        autoencoder.add(Activation('softmax'))
+
+        return autoencoder
