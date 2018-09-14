@@ -7,7 +7,8 @@ class Filter:
         self.colors = None
 
     def filter_sidewalk(self, img):
-        img = cv2.resize(img, (1280, 720))
+        # 이미지를 작게 해서 처리속도 향상
+        img = cv2.resize(img, (480, 270), interpolation=cv2.INTER_LINEAR)
         img = Filter.blur(img)
 
         labels = Filter.color_quantization(img, self.n_cluster, 10)
@@ -19,6 +20,8 @@ class Filter:
         print(main_colors)
 
         match = Filter.binary_match(labels, main_colors)
+
+        match = Filter.remove_small_objects(match, 2000)
 
         return match
 
@@ -36,6 +39,24 @@ class Filter:
                 main_colors.append(i)
 
         return main_colors
+
+    @staticmethod
+    def remove_small_objects(img, min_size=150):
+        # find all your connected components (white blobs in your image)
+        nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(img, connectivity=8)
+        # connectedComponentswithStats yields every seperated component with information on each of them, such as size
+        # the following part is just taking out the background which is also considered a component, but most of the time we don't want that.
+        sizes = stats[1:, -1]
+        nb_components = nb_components - 1
+
+        # your answer image
+        img2 = np.zeros((output.shape))
+        # for every component in the image, you keep it only if it's above min_size
+        for i in range(0, nb_components):
+            if sizes[i] >= min_size:
+                img2[output == i + 1] = 255
+
+        return img2
 
     @staticmethod
     def binary_match(img, search_list, mask=255):
