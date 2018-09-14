@@ -30,28 +30,27 @@ from tqdm import tqdm, trange
 from filter import Filter
 from model import MyModel
 
-HEIGHT = 720
-WIDTH = 1280
+HEIGHT = 288
+WIDTH = 512
 KERNEL = 40
 STRIDE = 40
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--video', type=str, default='data/test.mp4', help='input video')
-parser.add_argument('--load', type=bool, default=False, help='Load last weight')
+parser.add_argument('--load', type=str, default='False', help='Load last weight')
 parser.add_argument('--epochs', type=int, default=100, help='Training epochs')
 parser.add_argument('--init_skip', type=int, default=200, help='Skip frames on start')
 parser.add_argument('--show', type=bool, default=False, help='Show filtering task')
 args = parser.parse_args()
 
 print('Training video: {}, you can set manually "--video PATH"'.format(args.video))
-print('Load model = {}'.format(args.load))
+LOADMODEL = True if str(args.load).upper() == 'TRUE' else False
+print('Load model = {}'.format(LOADMODEL))
 
-model = MyModel(args.load, HEIGHT, WIDTH, kernel=KERNEL, stride=STRIDE)
+model = MyModel(LOADMODEL, HEIGHT, WIDTH)
 model.prepare_train()
 
-zone_h = int((HEIGHT-KERNEL)/STRIDE+1)
-zone_w = int((WIDTH-KERNEL)/STRIDE+1)
-filter = Filter(n_cluster=32, zone_h=zone_h, zone_w=zone_w)
+filter = Filter(n_cluster=32, zone_h=HEIGHT, zone_w=WIDTH)
 
 vidcap = cv2.VideoCapture(args.video)
 total = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -74,6 +73,9 @@ for i in range(model.epoch+1, args.epochs):
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 model.train_on_batch(np.array([img]), np.array([y]))
 
+                if step % 50 == 0:
+                    model.save_weights(i)
+
             success, image = vidcap.read()
 
-    model.save_weights()
+    model.save_weights(i)
