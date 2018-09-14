@@ -10,7 +10,7 @@ class Filter:
 
     def filter_sidewalk(self, img, show=False):
         # 이미지를 작게 해서 처리속도 향상
-        img = cv2.resize(img, (480, 270), interpolation=cv2.INTER_AREA)
+        img = cv2.resize(img, (480, 270))
         if show:
             cv2.imshow('org', img)
         img = Filter.blur(img)
@@ -26,11 +26,11 @@ class Filter:
 
         match = Filter.binary_match(labels, main_colors)
 
-        match = Filter.remove_small_objects(match, 2000)
+        match = Filter.remove_small_objects(match, 3000)
         if show:
             cv2.imshow('match', match)
 
-        activation = cv2.resize(match, (self.zone_w, self.zone_h), interpolation=cv2.INTER_AREA)
+        activation = cv2.resize(match, (self.zone_w, self.zone_h))
         if show:
             cv2.imshow('result', cv2.resize(activation, (480, 270)))
 
@@ -69,7 +69,7 @@ class Filter:
         nb_components = nb_components - 1
 
         # your answer image
-        img2 = np.zeros((output.shape))
+        img2 = np.zeros((output.shape), dtype=np.uint8)
         # for every component in the image, you keep it only if it's above min_size
         for i in range(0, nb_components):
             if sizes[i] >= min_size:

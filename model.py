@@ -15,18 +15,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-print("""
-    Walk-Assistant Copyright (C) 2018 Yoongi Kim
-    This program comes with ABSOLUTELY NO WARRANTY.
-    This is free software, and you are welcome to redistribute it
-    under certain conditions.
-""")
 
 import tensorflow as tf
 from keras import Sequential
 from keras import layers
 from keras.layers import TimeDistributed, Reshape, Conv2D, MaxPool2D, Lambda, Input, Dense, GlobalAveragePooling2D
 from keras.layers import BatchNormalization, Activation, DepthwiseConv2D, Bidirectional
+from keras.optimizers import Adam
 from keras import Model
 from keras.applications.mobilenetv2 import MobileNetV2, preprocess_input
 from keras.utils import to_categorical
@@ -64,7 +59,8 @@ class MyModel:
         else:
             self.model = self.make_model(kernel=kernel, stride=stride)
 
-        self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
+        opt = Adam(lr=0.0001)
+        self.model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['acc'])
 
         with open('models/model.json', 'w') as f:
             f.write(self.model.to_json())
@@ -98,23 +94,22 @@ class MyModel:
         return model
 
     def make_model(self, kernel=120, stride=80):
-        i = Input(batch_shape=(None, self.height, self.width, 3))  # (None, 720, 1280, 3)
+        i = Input(batch_shape=(None, self.height, self.width, 3))
         x = Lambda(lambda x: tf.extract_image_patches(
             x, ksizes=[1, kernel, kernel, 1], strides=[1, stride, stride, 1], rates=[1, 1, 1, 1], padding='VALID'))(i)
-        # (None, 8, 15, 43200)
 
         out_width = int((self.width - kernel)/stride + 1)
         out_height = int((self.height - kernel)/stride + 1)
         print(out_height, out_width)
 
-        x = Reshape([out_height, out_width, kernel, kernel, 3])(x)  # (None, 8, 15, 120, 120, 3)
-        x = Reshape([out_height*out_width, kernel, kernel, 3])(x)  # (None, 120, 120, 120, 3)
+        x = Reshape([out_height, out_width, kernel, kernel, 3])(x)
+        x = Reshape([out_height*out_width, kernel, kernel, 3])(x)
 
-        x = mobilenet_v2.MobileNetv2(x)  # (None, 120, 4, 4, 1280)
+        x = mobilenet_v2.MobileNetv2(x)
 
-        x = TimeDistributed(GlobalAveragePooling2D())(x)  # (None, 120, 1280)
-        x = TimeDistributed(Dense(2, activation='softmax'))(x)  # (None, 120, 2)
-        x = Reshape([out_height, out_width, 2])(x)  # (None, 8, 15, 2)
+        x = TimeDistributed(GlobalAveragePooling2D())(x)
+        x = TimeDistributed(Dense(2, activation='softmax'))(x)
+        x = Reshape([out_height, out_width, 2])(x)
 
         model = Model(inputs=[i], outputs=[x])
 
