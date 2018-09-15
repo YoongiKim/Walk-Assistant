@@ -44,9 +44,10 @@ STRIDE = 80
 parser = argparse.ArgumentParser()
 parser.add_argument('--video', type=str, default='data/test.mp4', help='input video')
 parser.add_argument('--load', type=str, default='False', help='Load last weight')
-parser.add_argument('--epochs', type=int, default=100, help='Training epochs')
-parser.add_argument('--init_skip', type=int, default=200, help='Skip frames on start')
+parser.add_argument('--epochs', type=int, default=1, help='Training epochs')
 parser.add_argument('--show', type=bool, default=False, help='Show filtering task')
+parser.add_argument('--init_skip', type=int, default=200, help='Skip frames on start')
+parser.add_argument('--skip', type=int, default=1, help='Skip frames per loop')
 args = parser.parse_args()
 
 print('Training video: {}, you can set manually "--video PATH"'.format(args.video))
@@ -60,10 +61,9 @@ zone_h = int((HEIGHT-KERNEL)/STRIDE+1)
 zone_w = int((WIDTH-KERNEL)/STRIDE+1)
 filter = Filter(n_cluster=32, zone_h=zone_h, zone_w=zone_w)
 
-vidcap = cv2.VideoCapture(args.video)
-total = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-for i in range(model.epoch+1, args.epochs):
+for i in range(model.epoch+1, args.epochs+1):
+    vidcap = cv2.VideoCapture(args.video)
+    total = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / (args.skip + 1))
     print('Skipping {} frames'.format(args.init_skip))
     for j in range(args.init_skip):
         success, image = vidcap.read()
@@ -84,6 +84,7 @@ for i in range(model.epoch+1, args.epochs):
                 if step % 50 == 0:
                     model.save_weights(i)
 
-            success, image = vidcap.read()
+            for skip in range(0, args.skip+1):
+                success, image = vidcap.read()
 
     model.save_weights(i)

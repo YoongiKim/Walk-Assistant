@@ -67,11 +67,11 @@ class Filter:
         nb_components = nb_components - 1
 
         # your answer image
-        img2 = np.zeros((output.shape), dtype=np.uint8)
+        img2 = img
         # for every component in the image, you keep it only if it's above min_size
         for i in range(0, nb_components):
-            if sizes[i] >= min_size:
-                img2[output == i + 1] = 255
+            if sizes[i] < min_size:
+                img2[output == i + 1] = 0
 
         return img2
 
