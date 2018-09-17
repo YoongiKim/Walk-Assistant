@@ -61,6 +61,10 @@ zone_h = int((HEIGHT-KERNEL)/STRIDE+1)
 zone_w = int((WIDTH-KERNEL)/STRIDE+1)
 filter = Filter(n_cluster=32, zone_h=zone_h, zone_w=zone_w)
 
+if model.epoch >= args.epochs:
+    print("Loaded model's epochs is bigger than desired epochs. Set --epochs {}".format(model.epoch + 1))
+    exit(1)
+
 for i in range(model.epoch+1, args.epochs+1):
     vidcap = cv2.VideoCapture(args.video)
     total = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / (args.skip + 1))

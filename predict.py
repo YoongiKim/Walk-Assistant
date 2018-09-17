@@ -43,9 +43,13 @@ parser.add_argument('video', type=str, help='input video path')
 parser.add_argument('--out', type=str, default='output/output.avi', help='output video save path')
 parser.add_argument('--show', type=str, default='False', help='show real time video')
 parser.add_argument('--skip', type=int, default=1, help='skip frame to speed up')
+parser.add_argument('--filter', type=str, default='True', help='Filter sparse area')
 args = parser.parse_args()
 
 SHOW = True if str(args.show).upper() == 'TRUE' else False
+print('show=',SHOW)
+FILTER = True if str(args.filter).upper() == 'TRUE' else False
+print('filter=',FILTER)
 
 weight_files = glob.glob('models/weight*.h5')
 last_file = max(weight_files, key=os.path.getctime)
@@ -75,8 +79,9 @@ for i in tqdm(range(0, total)):
         res = res[:, :, 1]  # (8, 15, 1)
         res *= 255  # to image 8 bit scale
         res = res.astype(np.uint8)
-        # _, res = cv2.threshold(res, 128, 255, cv2.THRESH_TOZERO)
-        # res = Filter.remove_small_objects(res, 3)
+        if FILTER:
+            _, res = cv2.threshold(res, 128, 255, cv2.THRESH_TOZERO)
+            res = Filter.remove_small_objects(res, 3)
         
         res = cv2.cvtColor(res, cv2.COLOR_GRAY2BGR)  # to white color
         res[:, :, 0] = 0  # remove blue channel
