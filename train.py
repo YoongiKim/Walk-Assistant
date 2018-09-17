@@ -43,7 +43,7 @@ STRIDE = 80
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--video', type=str, default='data/test.mp4', help='input video')
-parser.add_argument('--load', type=str, default='False', help='Load last weight')
+parser.add_argument('--load', type=str, default='True', help='Load last weight')
 parser.add_argument('--epochs', type=int, default=1, help='Training epochs')
 parser.add_argument('--show', type=bool, default=False, help='Show filtering task')
 parser.add_argument('--init_skip', type=int, default=200, help='Skip frames on start')

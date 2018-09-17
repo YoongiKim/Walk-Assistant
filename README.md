@@ -26,6 +26,12 @@ TensorFlow Korea 참고: https://www.facebook.com/groups/TensorFlowKR/permalink/
 
 ![concept](./img/concept.jpg)
 
+# 업그레이드 버전1
+OpenCV로 영상을 K-Mean Clustering 하고 영상 아랫부분의 주요 색깔과 같은 영역을 안전범위로 설정합니다.
+즉, 인도 영역을 어느정도 자동으로 인식합니다.
+![train](./img/train.jpg)
+![result](./img/result.jpg)
+
 
 # 사용법
 ## 학습
@@ -35,18 +41,17 @@ optional arguments:
 
 -h, --help       show this help message and exit
 
---video VIDEO    input video 학습할 동영상 경로를 지정합니다. (기본값: data/test.mp4)
+--video str      input video 학습할 동영상 경로를 지정합니다. (기본값: data/test.mp4)
 
---load LOAD      Load last weight 학습을 이어서 할지를 결정합니다. (기본값: True)
+--load bool      Load last weight 학습을 이어서 할지를 결정합니다. (기본값: True)
 
---steps STEPS    Desired train steps, skips frames if smaller than video
+--epochs int     Training epochs 몇번 학습할지 지정합니다.
 
-동영상 중에서 몇개의 프레임을 학습할지를 지정합니다.
+--show bool      Show filtering task 학습 중간 OpenCV 처리 과정을 보여줍니다.
 
-일정 프레임 단위로 건너뛰며 학습합니다.
+--init_skip int  Skip frames on start 영상 앞부분을 건너뜁니다.
 
---epochs EPOCHS  Training epochs 몇번 학습할지 지정합니다.
-
+--skip int       Skip frames per loop 프레임을 일정 단위로 건너뜁니다.
 
 
 ## 예측
