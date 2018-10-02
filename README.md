@@ -35,7 +35,9 @@ OpenCV로 영상을 K-Mean Clustering 하고 영상 아랫부분의 주요 색�
 
 # 사용법
 ## 학습
-python3 train.py [-h] [--video VIDEO] [--load LOAD] [--steps STEPS] [--epochs EPOCHS]
+python3 train.py [-h] [--video VIDEO] [--load LOAD] [--epochs EPOCHS] [--show SHOW] [--init_skip INIT_SKIP] [--skip SKIP]
+
+예시: python3 train.py --video data/test.mp4 --show true --load true --epochs 10 --init_skip 500 --skip 1
 
 optional arguments:
 
@@ -56,6 +58,8 @@ optional arguments:
 
 ## 예측
 python3 predict.py [-h] [--out OUT] [--show SHOW] [--skip SKIP] video
+
+예시: python3 predict.py --show true --out output/output.mp4 --skip 1 data/test.mp4
 
 positional arguments:
 
