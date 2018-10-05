@@ -1,21 +1,37 @@
-import tensorflow as tf
+import glob
+from skimage.io import imread, imsave
+import os
 
 class DataLoader:
-    def __init__(self, path_pattern):
-        # Make a queue of file names including all the JPEG images files in the relative
-        # image directory.
-        filename_queue = tf.train.string_input_producer(
-            tf.train.match_filenames_once(path_pattern))
+    def __init__(self):
+        pass
 
-        # Read an entire image file which is required since they're JPEGs, if the images
-        # are too large they could be split in advance to smaller files or use the Fixed
-        # reader to split up the file.
-        image_reader = tf.WholeFileReader()
+    @staticmethod
+    def get_files_list(pattern):
+        files = glob.glob(pattern)
+        return files
 
-        # Read a whole file from the queue, the first returned value in the tuple is the
-        # filename which we are ignoring.
-        file_name, image_file = image_reader.read(filename_queue)
+    @staticmethod
+    def read_image(path):
+        img = imread(path)
+        return img
 
-        # Decode the image as a JPEG file, this will turn it into a Tensor which we can
-        # then use in training.
-        image = tf.image.decode_jpeg(image_file)
+    @staticmethod
+    def write_image(img, path):
+        imsave(path, img)
+
+    @staticmethod
+    def mkdir(path):
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+
+if __name__ == '__main__':
+    loader = DataLoader()
+
+    files = loader.get_files_list('data/bdd100k/drivable_maps/labels/train/*.png')
+    print(files)
+    print(len(files))
+
+    for i in range(10):
+        print(files[i])
+        print(loader.read_image(files[i]))

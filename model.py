@@ -271,3 +271,8 @@ class MyModel:
         autoencoder.add(Activation('softmax'))
 
         return autoencoder
+
+    def build_road_classifier(self, classes, box_size=80):
+        model = MobileNetV2(input_shape=(box_size, box_size, 3), weights=None, classes=classes)
+        return model
+
