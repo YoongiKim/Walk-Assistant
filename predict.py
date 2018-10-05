@@ -38,6 +38,8 @@ from filter import Filter
 HEIGHT = 720
 WIDTH = 1280
 
+MODEL_NAME = 'main'
+
 parser = argparse.ArgumentParser()
 parser.add_argument('video', type=str, help='input video path')
 parser.add_argument('--out', type=str, default='output/output.avi', help='output video save path')
@@ -51,13 +53,13 @@ print('show=',SHOW)
 FILTER = True if str(args.filter).upper() == 'TRUE' else False
 print('filter=',FILTER)
 
-weight_files = glob.glob('models/weight*.h5')
+weight_files = glob.glob('models/{}/weight*.h5'.format(MODEL_NAME))
 last_file = max(weight_files, key=os.path.getctime)
 file_name = last_file.split('/')[-1]
 print('Starting from {}'.format(file_name))
 
 with CustomObjectScope({'relu6': tf.nn.relu6, 'DepthwiseConv2D': keras.layers.DepthwiseConv2D, 'tf': tf}):
-    with open('models/model.json', 'r') as f:
+    with open('models/{}/model.json'.format(MODEL_NAME), 'r') as f:
         model = model_from_json(f.read())
     model.load_weights(last_file)
 print('Loaded Model')

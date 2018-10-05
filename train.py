@@ -54,7 +54,7 @@ print('Training video: {}, you can set manually "--video PATH"'.format(args.vide
 LOADMODEL = True if str(args.load).upper() == 'TRUE' else False
 print('Load model = {}'.format(LOADMODEL))
 
-model = MyModel(LOADMODEL, HEIGHT, WIDTH, KERNEL, STRIDE)
+model = MyModel(LOADMODEL, HEIGHT, WIDTH, KERNEL, STRIDE, 0.01, model_name='main')
 model.prepare_train()
 
 zone_h = int((HEIGHT-KERNEL)/STRIDE+1)
@@ -62,7 +62,7 @@ zone_w = int((WIDTH-KERNEL)/STRIDE+1)
 filter = Filter(n_cluster=32, zone_h=zone_h, zone_w=zone_w)
 
 if model.epoch >= args.epochs:
-    print("Loaded model's epochs is bigger than desired epochs. Set --epochs {}".format(model.epoch + 1))
+    print("Loaded model's epochs is already bigger than desired epochs. Set --epochs {}".format(model.epoch + 1))
     exit(1)
 
 for i in range(model.epoch+1, args.epochs+1):
