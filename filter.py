@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 class Filter:
-    def __init__(self, n_cluster=32, zone_h=17, zone_w=31):
+    def __init__(self, n_cluster=16, zone_h=17, zone_w=31):
         self.n_cluster = n_cluster
         self.colors = None
         self.zone_h = zone_h

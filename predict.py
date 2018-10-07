@@ -45,13 +45,15 @@ parser.add_argument('video', type=str, help='input video path')
 parser.add_argument('--out', type=str, default='output/output.avi', help='output video save path')
 parser.add_argument('--show', type=str, default='False', help='show real time video')
 parser.add_argument('--skip', type=int, default=1, help='skip frame to speed up')
-parser.add_argument('--filter', type=str, default='True', help='Filter sparse area')
+parser.add_argument('--filter', type=str, default='False', help='Filter sparse area')
+parser.add_argument('--model_name', type=str, default='main', help='model directory name under models.')
 args = parser.parse_args()
 
 SHOW = True if str(args.show).upper() == 'TRUE' else False
 print('show=',SHOW)
 FILTER = True if str(args.filter).upper() == 'TRUE' else False
 print('filter=',FILTER)
+MODEL_NAME = args.model_name
 
 weight_files = glob.glob('models/{}/weight*.h5'.format(MODEL_NAME))
 last_file = max(weight_files, key=os.path.getctime)
