@@ -47,7 +47,6 @@ LOADMODEL = True if str(args.load).upper() == 'TRUE' else False
 print('Load model = {}'.format(LOADMODEL))
 
 model = MyModel(LOADMODEL, HEIGHT, WIDTH, KERNEL, STRIDE, 0.01, model_name='road')
-model.prepare_train()
 
 rows = int((HEIGHT-KERNEL)/STRIDE+1)
 cols = int((WIDTH-KERNEL)/STRIDE+1)

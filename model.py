@@ -19,12 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import tensorflow as tf
 from keras import Sequential
 from keras import layers
-from keras.layers import TimeDistributed, Reshape, Conv2D, MaxPool2D, UpSampling2D, Lambda, Input, Dense, GlobalAveragePooling2D
+from keras.layers import Reshape, Conv2D, MaxPool2D, UpSampling2D, Lambda, Input, Dense, GlobalAveragePooling2D, Flatten
+from keras.layers import TimeDistributed as Dist
 from keras.layers import BatchNormalization, Activation, DepthwiseConv2D, Bidirectional
 from keras.layers.core import Activation, Reshape, Permute
 from keras.optimizers import Adam
 from keras import Model
-from keras.applications.mobilenetv2 import MobileNetV2, preprocess_input
 from keras.utils import to_categorical
 from keras import backend as K
 import cv2
@@ -44,7 +44,7 @@ import argparse
 from tqdm import tqdm
 from filter import Filter
 from data_loader import DataLoader
-
+from keras.models import load_model
 
 class MyModel:
     def __init__(self, load, height, width, kernel, stride, lr, model_name):
@@ -61,54 +61,41 @@ class MyModel:
         self.load = load
         self.height = height
         self.width = width
-        self.epoch = 0
-        self.loss = 0
-        self.acc = 0
         self.lr = lr
         self.model_name = model_name
+        self.epoch = 0
 
         DataLoader.mkdir('models/{}'.format(self.model_name))
 
         if self.load:
             self.model = self.load_model()
         else:
-            self.model = self.build_model(kernel, stride)
+            self.model = self.build_simple_model(kernel, stride)
 
         opt = Adam(lr=lr)
         self.model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['acc'])
 
-        with open('models/{}/model.json'.format(model_name), 'w') as f:
-            f.write(self.model.to_json())
-            print('Saved Model Structure')
-
-    def train_on_batch(self, X, Y):
-        Y = self.to_categorical_custom(Y)
-        self.loss, self.acc = self.model.train_on_batch(X, Y)
-
-    def save_weights(self, epoch):
-        self.model.save_weights('models/{}/weight.{}-{:.3f}.h5'.format(self.model_name, epoch, self.acc))
-        print('Saved model successfully')
+    def save_model(self, epoch, acc):
+        Model(self.model).save('models/{}/model.{}-{:.3f}.h5'.format(self.model_name, int(epoch), acc))
+        print('Saved model')
 
     def load_model(self):
-        weight_files = glob.glob('models/{}/weight.*.h5'.format(self.model_name))
-        last_file = max(weight_files, key=os.path.getctime)
+        # model.99-0.98.h5
+        files = glob.glob('models/{}/model.*.h5'.format(self.model_name))
+        last_file = max(files, key=os.path.getctime)
 
-        file_name = last_file.split('/')[-1]
-        epoch_acc = file_name.split('.')[1]
-        epoch = epoch_acc.split('-')[0]
-        self.epoch = int(epoch)
-
-        print('Starting from {} - epoch: {}'.format(file_name, self.epoch))
+        file_name = last_file.replace('\\', '/').split('/')[-1].replace('model.', '').replace('.h5', '')
+        self.epoch = int(file_name.split('-')[0])
+        acc = float(file_name.split('-')[1])
 
         with CustomObjectScope({'relu6': tf.nn.relu6, 'DepthwiseConv2D': keras.layers.DepthwiseConv2D, 'tf': tf}):
-            with open('models/{}/model.json'.format(self.model_name), 'r') as f:
-                model = model_from_json(f.read())
-            model.load_weights(last_file)
-        print('Loaded Model')
+            model = load_model(last_file)
+
+        print('Loaded last model - {}, epoch: {}, acc: {}'.format(last_file, self.epoch, acc))
 
         return model
 
-    def build_model(self, kernel=80, stride=80):
+    def build_simple_model(self, kernel=80, stride=80):
         i = Input(batch_shape=(None, self.height, self.width, 3))
         x = Lambda(lambda x: tf.extract_image_patches(
             x, ksizes=[1, kernel, kernel, 1], strides=[1, stride, stride, 1], rates=[1, 1, 1, 1], padding='VALID'))(i)
@@ -118,12 +105,29 @@ class MyModel:
         print(out_height, out_width)
 
         x = Reshape([out_height, out_width, kernel, kernel, 3])(x)
-        x = Reshape([out_height*out_width, kernel, kernel, 3])(x)
+        x = Reshape([out_height*out_width, kernel, kernel, 3])(x)  # [144, 80, 80, 3]
 
-        x = mobilenet_v2.MobileNetv2(x)
+        x = Dist(Conv2D(64, (3, 3), strides=(2, 2), padding='same'))(x)
+        x = Dist(BatchNormalization())(x)
+        x = Dist(Activation('relu'))(x)
+        x = Dist(MaxPool2D())(x)
 
-        x = TimeDistributed(GlobalAveragePooling2D())(x)
-        x = TimeDistributed(Dense(2, activation='softmax'))(x)
+        x = Dist(Conv2D(128, (3, 3), strides=(2, 2), padding='same'))(x)
+        x = Dist(BatchNormalization())(x)
+        x = Dist(Activation('relu'))(x)
+        x = Dist(MaxPool2D())(x)
+
+        x = Dist(Conv2D(256, (3, 3), strides=(2, 2), padding='same'))(x)
+        x = Dist(BatchNormalization())(x)
+        x = Dist(Activation('relu'))(x)
+        x = Dist(MaxPool2D())(x)
+
+        x = Dist(Conv2D(512, (3, 3), strides=(2, 2), padding='same'))(x)
+        x = Dist(BatchNormalization())(x)
+        x = Dist(Activation('relu'))(x)
+
+        x = Dist(Flatten())(x)
+        x = Dist(Dense(2, activation='softmax'))(x)
         x = Reshape([out_height, out_width, 2])(x)
 
         model = Model(inputs=[i], outputs=[x])
@@ -132,161 +136,26 @@ class MyModel:
 
         return model
 
-    @staticmethod
-    def to_categorical_custom(Y):
-        # softmax를 위해 실수 범위에서 one-hot 인코딩
-        if len(Y.shape) != 4:
-            print('model.py, to_categorical_custom(Y),'
-                  ' input shape is wrong. expected 4 dimensions (batch, height, width, channels.')
-        batch = Y.shape[0]
-        row = Y.shape[1]
-        col = Y.shape[2]
-        a = np.zeros(shape=(batch, row, col, 2), dtype=np.float32)
-        for b in range(batch):
-            for i in range(row):
-                for j in range(col):
-                    a[b][i][j][0] = 1.0-Y[b][i][j]
-                    a[b][i][j][1] = Y[b][i][j]
+    def build_model(self, kernel=80, stride=80):
+        i = Input(batch_shape=(None, self.height, self.width, 3))
+        x = Lambda(lambda x: tf.extract_image_patches(
+            x, ksizes=[1, kernel, kernel, 1], strides=[1, stride, stride, 1], rates=[1, 1, 1, 1], padding='VALID'))(i)
 
-        return np.array(a)
+        out_width = int((self.width - kernel) / stride + 1)
+        out_height = int((self.height - kernel) / stride + 1)
+        print(out_height, out_width)
 
-    def prepare_train(self):
-        # time = datetime.datetime.now().strftime('%m-%d, %H-%M-%S')
-        # path = './logs/{}'.format(time)
-        # if not os.path.exists(path):
-        #     os.makedirs(path)
+        x = Reshape([out_height, out_width, kernel, kernel, 3])(x)
+        x = Reshape([out_height * out_width, kernel, kernel, 3])(x)
 
-        # board = TensorBoard(log_dir='./logs/{}'.format(time), write_images=True, write_graph=True)
-        # checkpoint_path = 'models' + '/weight.{epoch:02d}-{acc:.2f}.h5'
-        # checkpoint = ModelCheckpoint(checkpoint_path, monitor='acc', save_best_only=False, mode='auto')
-        pass
+        x = mobilenet_v2.MobileNetv2(x)
 
-    # def build_segnet(self):
-    #     img_w = self.width
-    #     img_h = self.height
-    #     n_labels = 2
-    #     kernel = (3, 3)
-    #
-    #     encoding_layers = [
-    #         Conv2D(64, kernel, padding='same', input_shape=(img_h, img_w, 3)),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(64, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         MaxPool2D(),
-    #
-    #         Conv2D(128, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(128, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         MaxPool2D(),
-    #
-    #         Conv2D(256, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(256, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(256, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         MaxPool2D(),
-    #
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         MaxPool2D(),
-    #
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         MaxPool2D(),
-    #     ]
-    #
-    #     autoencoder = Sequential()
-    #     autoencoder.encoding_layers = encoding_layers
-    #
-    #     for l in autoencoder.encoding_layers:
-    #         autoencoder.add(l)
-    #         print(l.input_shape, l.output_shape, l)
-    #
-    #     decoding_layers = [
-    #         UpSampling2D(),
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #
-    #         UpSampling2D(),
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(512, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(256, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #
-    #         UpSampling2D(),
-    #         Conv2D(256, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(256, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(128, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #
-    #         UpSampling2D(),
-    #         Conv2D(128, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(64, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #
-    #         UpSampling2D(),
-    #         Conv2D(64, kernel, padding='same'),
-    #         BatchNormalization(),
-    #         Activation('relu'),
-    #         Conv2D(n_labels, (1, 1), padding='valid'),
-    #         BatchNormalization(),
-    #     ]
-    #     autoencoder.decoding_layers = decoding_layers
-    #     for l in autoencoder.decoding_layers:
-    #         autoencoder.add(l)
-    #         print(l.input_shape, l.output_shape, l)
-    #
-    #     autoencoder.add(Reshape((n_labels, img_h * img_w)))
-    #     autoencoder.add(Permute((2, 1)))
-    #     autoencoder.add(Reshape((img_h, img_w, n_labels)))
-    #     autoencoder.add(Activation('softmax'))
-    #
-    #     return autoencoder
+        x = Dist(GlobalAveragePooling2D())(x)
+        x = Dist(Dense(2, activation='softmax'))(x)
+        x = Reshape([out_height, out_width, 2])(x)
 
-    # def build_road_classifier(self, classes, box_size=80):
-    #     model = MobileNetV2(input_shape=(box_size, box_size, 3), weights=None, classes=classes)
-    #     return model
+        model = Model(inputs=[i], outputs=[x])
 
+        model.summary()
+
+        return model
