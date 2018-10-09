@@ -43,7 +43,7 @@ MODEL_NAME = 'main'
 parser = argparse.ArgumentParser()
 parser.add_argument('video', type=str, help='input video path')
 parser.add_argument('--out', type=str, default='output/output.avi', help='output video save path')
-parser.add_argument('--show', type=str, default='False', help='show real time video')
+parser.add_argument('--show', type=str, default='True', help='show real time video')
 parser.add_argument('--skip', type=int, default=1, help='skip frame to speed up')
 parser.add_argument('--filter', type=str, default='False', help='Filter sparse area')
 parser.add_argument('--model_name', type=str, default='main', help='model directory name under models.')
@@ -77,7 +77,7 @@ for i in tqdm(range(0, total)):
     if success:
         img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         img = cv2.resize(img, (WIDTH, HEIGHT))
-        img = np.array([img])
+        img = np.array([img])/255.0
         
         res = model.predict(img)[0]  # (batch, 8, 15, 2)
         res = res[:, :, 1]  # (8, 15, 1)
