@@ -132,6 +132,9 @@ class MyModel:
 
         return model
 
+    def build_simple_model(self):
+        pass
+
     @staticmethod
     def to_categorical_custom(Y):
         # softmax를 위해 실수 범위에서 one-hot 인코딩

@@ -24,6 +24,27 @@ class OptFlow:
 
         return move_x, move_y
 
+    @staticmethod
+    def draw_arrow(img, x, y, multiply=25):
+        h, w, c = img.shape
+        arrow = cv2.arrowedLine(img, (int(w / 2), int(h / 2)), (int(w / 2 + x * multiply), int(h / 2 + y * multiply)),
+                                color=(0, 255, 255), thickness=15)
+        return arrow
+
+    @staticmethod
+    def draw_way(img, move_queue, x_multiply=3, y_multiply=4, discount_rate=0.99):
+        h, w, c = img.shape
+        sum_x = float(w/2)
+        sum_y = float(h)
+
+        for index, (x, y) in enumerate(move_queue):
+            img = cv2.line(img, (int(sum_x), int(sum_y)), (int(sum_x+x), int(sum_y+y)), (0,255,255), 20)
+            sum_x += x * x_multiply
+            sum_y += y * y_multiply
+
+        return img
+
+
 if __name__ == '__main__':
     flow = OptFlow()
 
@@ -35,10 +56,7 @@ if __name__ == '__main__':
         x, y = flow.get_direction(img1, img2)
         print('X: {}, Y: {}'.format(x, y))
 
-        h, w, c = img2.shape
-        arrow = cv2.arrowedLine(img2, (int(w / 2), int(h / 2)), (int(w / 2 + x * 25), int(h / 2 + -1*abs(y * 50))),
-                                color=(0, 255, 255), thickness=15)
-
+        arrow = flow.draw_arrow(img1, x ,y)
         cv2.imshow('arrow', arrow)
         cv2.moveWindow('arrow', 0, 0)
         if cv2.waitKey(1) & 0xFF == ord('q'):
