@@ -32,17 +32,18 @@ class OptFlow:
         return arrow
 
     @staticmethod
-    def draw_way(img, move_queue, x_multiply=3, y_multiply=4, discount_rate=0.99):
+    def draw_way(img, move_queue, x_multiply=3, y_multiply=4):
         h, w, c = img.shape
+        way = np.zeros((h, w, 1))
         sum_x = float(w/2)
         sum_y = float(h)
 
         for index, (x, y) in enumerate(move_queue):
-            img = cv2.line(img, (int(sum_x), int(sum_y)), (int(sum_x+x), int(sum_y+y)), (0,255,255), 20)
+            way = cv2.line(way, (int(sum_x), int(sum_y)), (int(sum_x+x), int(sum_y+y)), 255, 200)
             sum_x += x * x_multiply
             sum_y += y * y_multiply
 
-        return img
+        return way
 
 
 if __name__ == '__main__':
