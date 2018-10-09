@@ -34,6 +34,16 @@ from keras.models import Model, model_from_json
 import argparse
 from tqdm import tqdm
 from filter import Filter
+from model import MyModel
+import math
+
+
+def brighter(img, multiply, max_value):
+    for i in range(len(img)):
+        for j in range(len(img[i])):
+            img[i][j] = min(img[i][j]*multiply, max_value)
+    return img
+
 
 HEIGHT = 720
 WIDTH = 1280
@@ -44,7 +54,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('video', type=str, help='input video path')
 parser.add_argument('--out', type=str, default='output/output.avi', help='output video save path')
 parser.add_argument('--show', type=str, default='True', help='show real time video')
-parser.add_argument('--skip', type=int, default=1, help='skip frame to speed up')
+parser.add_argument('--skip', type=int, default=4, help='skip frame to speed up')
 parser.add_argument('--filter', type=str, default='False', help='Filter sparse area')
 parser.add_argument('--model_name', type=str, default='main', help='model directory name under models.')
 args = parser.parse_args()
@@ -55,16 +65,7 @@ FILTER = True if str(args.filter).upper() == 'TRUE' else False
 print('filter=',FILTER)
 MODEL_NAME = args.model_name
 
-weight_files = glob.glob('models/{}/weight*.h5'.format(MODEL_NAME))
-last_file = max(weight_files, key=os.path.getctime)
-file_name = last_file.split('/')[-1]
-print('Starting from {}'.format(file_name))
-
-with CustomObjectScope({'relu6': tf.nn.relu6, 'DepthwiseConv2D': keras.layers.DepthwiseConv2D, 'tf': tf}):
-    with open('models/{}/model.json'.format(MODEL_NAME), 'r') as f:
-        model = model_from_json(f.read())
-    model.load_weights(last_file)
-print('Loaded Model')
+my_model = MyModel(True, 720, 1280, 80, 80, 0.001, 'main')
 
 vidcap = cv2.VideoCapture(args.video)
 total = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / (args.skip+1))
@@ -79,9 +80,11 @@ for i in tqdm(range(0, total)):
         img = cv2.resize(img, (WIDTH, HEIGHT))
         img = np.array([img])/255.0
         
-        res = model.predict(img)[0]  # (batch, 8, 15, 2)
-        res = res[:, :, 1]  # (8, 15, 1)
+        res = my_model.model.predict(img)[0]  # (batch, 9, 16, 2)
+        res = np.squeeze(res[:, :, 1])  # (9, 16, 1)
+
         res *= 255  # to image 8 bit scale
+        res = brighter(res, 1.5, 255)
         res = res.astype(np.uint8)
         if FILTER:
             _, res = cv2.threshold(res, 128, 255, cv2.THRESH_TOZERO)
@@ -90,8 +93,8 @@ for i in tqdm(range(0, total)):
         res = cv2.cvtColor(res, cv2.COLOR_GRAY2BGR)  # to white color
         res[:, :, 0] = 0  # remove blue channel
         res[:, :, 2] = 0  # remove red channel
-        res = cv2.resize(res, (1280, 720), interpolation=cv2.INTER_LINEAR)  # resize 15x8 to 1280x720
-        org = cv2.resize(image, (1280, 720))
+        res = cv2.resize(res, (WIDTH, HEIGHT), interpolation=cv2.INTER_LINEAR)  # resize 15x8 to 1280x720
+        org = cv2.resize(image, (WIDTH, HEIGHT))
         added = cv2.add(org, res)  # combine input, output
 
         out.write(added)  # save video frame

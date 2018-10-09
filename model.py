@@ -64,7 +64,6 @@ class MyModel:
         self.lr = lr
         self.model_name = model_name
         self.epoch = 0
-        self.acc = 0.0
 
         DataLoader.mkdir('models/{}'.format(self.model_name))
 
@@ -77,22 +76,22 @@ class MyModel:
         self.model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['acc'])
 
     def save_model(self, epoch, acc):
-        Model(self.model).save('models/model.{}-{:.3f}.h5'.format(int(epoch), acc))
+        Model(self.model).save('models/{}/model.{}-{:.3f}.h5'.format(self.model_name, int(epoch), acc))
         print('Saved model')
 
     def load_model(self):
         # model.99-0.98.h5
-        files = glob.glob('models/model.*.h5')
+        files = glob.glob('models/{}/model.*.h5'.format(self.model_name))
         last_file = max(files, key=os.path.getctime)
 
         file_name = last_file.replace('\\', '/').split('/')[-1].replace('model.', '').replace('.h5', '')
-        epoch = int(file_name.split('-')[0])
+        self.epoch = int(file_name.split('-')[0])
         acc = float(file_name.split('-')[1])
 
         with CustomObjectScope({'relu6': tf.nn.relu6, 'DepthwiseConv2D': keras.layers.DepthwiseConv2D, 'tf': tf}):
             model = load_model(last_file)
 
-        print('Loaded last model - {}, epoch: {}, acc: {}'.format(last_file, epoch, acc))
+        print('Loaded last model - {}, epoch: {}, acc: {}'.format(last_file, self.epoch, acc))
 
         return model
 
