@@ -10,8 +10,8 @@ DATA_PATH = "data/gopro/*.mp4"
 # 영상이 중간에 끊기면 코덱 문제이므로 ffmpeg로 mute 해야 합니다.
 # ffmpeg -i test.mp4 -c copy -an test_mute.mp4
 
-OUTPUT_PATH = "D:/Walk-Assistant/frames"
-LABEL_PATH = "D:/Walk-Assistant"
+OUTPUT_PATH = "data/frames"
+LABEL_PATH = "data/frames"
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 files = glob.glob(DATA_PATH)
@@ -36,14 +36,15 @@ for file in files:
     count = 0
 
     while succeed:
-        x, y = flow.get_direction(img1, img2)
+        x, y = flow.get_direction(img1, img2, show=True)
         flow_queue.append((x, y))
 
         if len(img_queue) >= QUEUE_SIZE:
             pop_img = img_queue.pop(0)
             pop_flow = flow_queue.pop(0)
 
-            way = flow.draw_way(pop_img, flow_queue)
+            # way_visual = flow.draw_way(pop_img, flow_queue, size=40)
+            way = flow.draw_way(pop_img, flow_queue, size=200)
             way = cv2.resize(way, (16, 9))
 
             way_flatten = np.reshape(np.array(np.array(way)/255).astype(np.int), 144)
@@ -57,6 +58,11 @@ for file in files:
             visual = cv2.resize(way, (1280, 720))
             visual = cv2.cvtColor(np.array(visual).astype(np.uint8), cv2.COLOR_GRAY2BGR)
             visual = cv2.add(pop_img, visual)
+
+            # way_visual = cv2.cvtColor(np.array(way_visual).astype(np.uint8), cv2.COLOR_GRAY2BGR)
+            # way_visual[:,:,0]=0
+            # visual = cv2.add(visual, way_visual)
+
             cv2.imshow('visual', visual)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 print('User Interrupted')

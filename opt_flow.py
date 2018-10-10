@@ -9,7 +9,7 @@ class OptFlow:
         self.height_start = int(self.height * height_start)
         self.height_end = int(self.height * height_end)
 
-    def get_direction(self, frame1, frame2):
+    def get_direction(self, frame1, frame2, show=False):
         frame1 = cv2.resize(frame1, (self.width, self.height))
         frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
         frame2 = cv2.resize(frame2, (self.width, self.height))
@@ -22,6 +22,19 @@ class OptFlow:
         move_x = -1 * flow_avg[0]
         move_y = -1 * flow_avg[1]
 
+        if show:
+            hsv = np.zeros((self.height_end - self.height_start, self.width, 3))
+            hsv[...,1] = 255
+            mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+            hsv[..., 0] = ang * 180 / np.pi / 2
+            hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+            bgr = cv2.cvtColor(np.array(hsv).astype(np.uint8), cv2.COLOR_HSV2BGR)
+
+            cv2.imshow('opt_flow', bgr)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                print('User Interrupted')
+                exit(1)
+
         return move_x, move_y
 
     @staticmethod
@@ -32,14 +45,14 @@ class OptFlow:
         return arrow
 
     @staticmethod
-    def draw_way(img, move_queue, x_multiply=3, y_multiply=4):
+    def draw_way(img, move_queue, x_multiply=3, y_multiply=4, size=200):
         h, w, c = img.shape
         way = np.zeros((h, w, 1))
         sum_x = float(w/2)
         sum_y = float(h)
 
         for index, (x, y) in enumerate(move_queue):
-            way = cv2.line(way, (int(sum_x), int(sum_y)), (int(sum_x+x), int(sum_y+y)), 255, 200)
+            way = cv2.line(way, (int(sum_x), int(sum_y)), (int(sum_x+x), int(sum_y+y)), 255, size)
             sum_x += x * x_multiply
             sum_y += y * y_multiply
 

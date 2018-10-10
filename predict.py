@@ -65,7 +65,7 @@ FILTER = True if str(args.filter).upper() == 'TRUE' else False
 print('filter=',FILTER)
 MODEL_NAME = args.model_name
 
-my_model = MyModel(True, 720, 1280, 80, 80, 0.001, 'main')
+my_model = MyModel(True, 720, 1280, 80, 80, 0.001, MODEL_NAME)
 
 vidcap = cv2.VideoCapture(args.video)
 total = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / (args.skip+1))
