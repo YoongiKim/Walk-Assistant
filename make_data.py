@@ -7,7 +7,7 @@ import threading
 from tqdm import tqdm, trange
 
 QUEUE_SIZE = 50
-DATA_PATH = "data/gopro/*.mp4"
+DATA_PATH = "data/gopro2/*.mp4"
 # 영상이 중간에 끊기면 코덱 문제이므로 ffmpeg로 mute 해야 합니다.
 # ffmpeg -i test.mp4 -c copy -an test_mute.mp4
 
@@ -41,7 +41,7 @@ for file in files:
     succeed, img2 = cap.read()
     img_queue.append(img2)
 
-    with trange(total-END_SKIP) as t:
+    with trange(START_SKIP, total-END_SKIP-1) as t:
         for i in t:
             x, y = flow.get_direction(img1, img2, show=False)
             flow_queue.append((x, y))
@@ -55,31 +55,45 @@ for file in files:
                 way = cv2.resize(way, (16, 9))
 
                 way_flatten = np.reshape(np.array(np.array(way)/255).astype(np.int), 144)
-                way_encode = ''
-                for b in way_flatten:
-                    way_encode += str(b)
-                label_lines.append('%s_%d.jpg,%s\n' % (file_name, i, way_encode))
-                threading.Thread(target=cv2.imwrite, args=('%s/%s_%d.jpg' % (OUTPUT_PATH, file_name, i), pop_img)).start()
-                # t.write('%s_%d.jpg,%s\n' % (file_name, i, way_encode))
 
-                visual = cv2.resize(way, (1280, 720))
-                visual = cv2.cvtColor(np.array(visual).astype(np.uint8), cv2.COLOR_GRAY2BGR)
-                visual = cv2.add(pop_img, visual)
+                if np.sum(way_flatten) > 2:  # 횡단보도 대기 무시
+                    way_encode = ''
+                    for b in way_flatten:
+                        way_encode += str(b)
+                    label_lines.append('%s_%d.jpg,%s\n' % (file_name, i, way_encode))
+                    threading.Thread(target=cv2.imwrite, args=('%s/%s_%d.jpg' % (OUTPUT_PATH, file_name, i), pop_img)).start()
+                    # t.write('%s_%d.jpg,%s\n' % (file_name, i, way_encode))
 
-                # way_visual = cv2.cvtColor(np.array(way_visual).astype(np.uint8), cv2.COLOR_GRAY2BGR)
-                # way_visual[:,:,0]=0
-                # visual = cv2.add(visual, way_visual)
+                    visual = cv2.resize(way, (1280, 720))
+                    visual = cv2.cvtColor(np.array(visual).astype(np.uint8), cv2.COLOR_GRAY2BGR)
+                    visual = cv2.add(pop_img, visual)
 
-                cv2.imshow('visual', visual)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    print('User Interrupted')
-                    break
+                    # way_visual = cv2.cvtColor(np.array(way_visual).astype(np.uint8), cv2.COLOR_GRAY2BGR)
+                    # way_visual[:,:,0]=0
+                    # visual = cv2.add(visual, way_visual)
+
+                    cv2.imshow('visual', visual)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        print('User Interrupted')
+                        break
 
             img1 = img2
             succeed, img2 = cap.read()
             img_queue.append(img2)
 
-with open('{}/label.txt'.format(OUTPUT_PATH), 'w') as f:
-    f.writelines(label_lines)
+print('Processed %d frames' % len(label_lines))
 
-print('Completed %d frames' % len(label_lines))
+last_labels = []
+if os.path.exists('{}/label.txt'.format(OUTPUT_PATH)):
+    print('Found existing label file. Appending labels...')
+    with open('{}/label.txt'.format(OUTPUT_PATH), 'r') as p:
+        last_labels = p.readlines()
+
+total_labels = last_labels + label_lines
+set_labels = set(total_labels)
+print('Found %d duplicated labels' % (len(total_labels) - len(set_labels)))
+
+with open('{}/label.txt'.format(OUTPUT_PATH), 'w') as f:
+    f.writelines(set_labels)
+
+print('Saved %d labels' % len(set_labels))

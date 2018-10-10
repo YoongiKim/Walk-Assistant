@@ -1,94 +1,36 @@
-"""
-Walk-Assistant : Recognizing sidewalk for the visually impaired
-Copyright (C) 2018 Yoongi Kim (devlifecode@outlook.com)
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-print("""
-    Walk-Assistant Copyright (C) 2018 Yoongi Kim
-    This program comes with ABSOLUTELY NO WARRANTY.
-    This is free software, and you are welcome to redistribute it
-    under certain conditions.
-""")
-
-
-import cv2
-import numpy as np
-import argparse
-from tqdm import tqdm, trange
-from filter import Filter
+import tensorflow as tf
 from model import MyModel
+import glob
+from generator import Generator
+from keras.callbacks import TensorBoard, ModelCheckpoint
 
-
-# HEIGHT = 288
-# WIDTH = 512
-# KERNEL = 40
-# STRIDE = 40
+BATCH_SIZE = 8
 
 HEIGHT = 720
 WIDTH = 1280
 KERNEL = 80
 STRIDE = 80
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--video', type=str, default='data/test.mp4', help='input video')
-parser.add_argument('--load', type=str, default='True', help='Load last weight')
-parser.add_argument('--epochs', type=int, default=1, help='Training epochs')
-parser.add_argument('--show', type=bool, default=False, help='Show filtering task')
-parser.add_argument('--init_skip', type=int, default=200, help='Skip frames on start')
-parser.add_argument('--skip', type=int, default=1, help='Skip frames per loop')
-args = parser.parse_args()
+TILE_ROW = int((HEIGHT-KERNEL)/STRIDE+1)
+TILE_COL = int((WIDTH-KERNEL)/STRIDE+1)
 
-print('Training video: {}, you can set manually "--video PATH"'.format(args.video))
-LOADMODEL = True if str(args.load).upper() == 'TRUE' else False
-print('Load model = {}'.format(LOADMODEL))
+print('Load Model? (y/n)')
+answer = input()
 
-model = MyModel(LOADMODEL, HEIGHT, WIDTH, KERNEL, STRIDE, 0.01, model_name='main')
-model.prepare_train()
+load = False
 
-zone_h = int((HEIGHT-KERNEL)/STRIDE+1)
-zone_w = int((WIDTH-KERNEL)/STRIDE+1)
-filter = Filter(n_cluster=32, zone_h=zone_h, zone_w=zone_w)
+if answer == 'y':
+    load = True
+    print('Loading model...')
+else:
+    print('Building new model...')
 
-if model.epoch >= args.epochs:
-    print("Loaded model's epochs is already bigger than desired epochs. Set --epochs {}".format(model.epoch + 1))
-    exit(1)
+my_model = MyModel(load, HEIGHT, WIDTH, KERNEL, STRIDE, lr=1e-6, model_name='main')
 
-for i in range(model.epoch+1, args.epochs+1):
-    vidcap = cv2.VideoCapture(args.video)
-    total = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / (args.skip + 1))
-    print('Skipping {} frames'.format(args.init_skip))
-    for j in range(args.init_skip):
-        success, image = vidcap.read()
+gen = Generator('data/frames', tile_row=TILE_ROW, tile_col=TILE_COL, batch_size=BATCH_SIZE)
 
-    success, image = vidcap.read()
+checkpoint_path = 'models/main/model.{epoch:02d}-{acc:.2f}.h5'
+checkpoint = ModelCheckpoint(checkpoint_path, monitor='acc', save_best_only=False, mode='auto', save_weights_only=False)
+tb = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=True, write_images=True)
 
-    with trange(0, total-args.init_skip) as t:
-        t.set_description('Epoch {}'.format(i))
-        for step in t:
-            if success:
-                t.write('step:{}, loss:{}, acc:{}'.format(step, model.loss, model.acc))
-                img = cv2.resize(image, (WIDTH, HEIGHT))
-                y = filter.filter_sidewalk(img, args.show)
-
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                model.train_on_batch(np.array([img]), np.array([y]))
-                
-                if step % 50 == 0:
-                    model.save_weights(i)
-
-            for skip in range(0, args.skip+1):
-                success, image = vidcap.read()
-
-    model.save_weights(i)
+my_model.model.fit_generator(gen.generator(), steps_per_epoch=len(gen.files)//BATCH_SIZE, epochs=100, callbacks=[checkpoint, tb], initial_epoch=my_model.epoch)
