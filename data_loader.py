@@ -13,7 +13,7 @@ class DataLoader:
 
     @staticmethod
     def read_image(path):
-        img = imread(path)
+        img = imread(path)  # Read as RGB
         return img
 
     @staticmethod
