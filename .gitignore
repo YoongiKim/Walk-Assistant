@@ -110,3 +110,4 @@ output/*
 *.avi
 *.mp4
 logs/*
+!data/test.mp4
