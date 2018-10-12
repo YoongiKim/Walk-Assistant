@@ -84,7 +84,7 @@ for i in tqdm(range(0, total)):
         res = np.squeeze(res[:, :, 1])  # (9, 16, 1)
 
         res *= 255  # to image 8 bit scale
-        res = brighter(res, 1.5, 255)
+        res = brighter(res, 2.0, 255)
         res = res.astype(np.uint8)
         if FILTER:
             _, res = cv2.threshold(res, 128, 255, cv2.THRESH_TOZERO)
