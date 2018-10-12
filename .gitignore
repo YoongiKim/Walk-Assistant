@@ -108,5 +108,5 @@ venv.bak/
 .idea/*
 output/*
 *.avi
-data/*
+*.mp4
 logs/*

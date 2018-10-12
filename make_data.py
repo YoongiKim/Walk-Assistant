@@ -7,17 +7,16 @@ import threading
 from tqdm import tqdm, trange
 
 QUEUE_SIZE = 50
-DATA_PATH = "data/gopro2/*.mp4"
+DATA_PATH = "data/videos/*.mp4"
 
 # 영상이 중간에 끊기면 코덱 문제이므로 ffmpeg로 mute 해야 합니다.
-# Linux: ffmpeg -i test.mp4 -c copy -an test_mute.mp4
-# Windows: ffmpeg.exe -i test.mp4 -c copy -an test_mute.mp4
+# Linux: ffmpeg -i data/videos/test.mp4 -c copy -an data/videos/test_mute.mp4
+# Windows: ffmpeg.exe -i data/videos/test.mp4 -c copy -an data/videos/test_mute.mp4
 
 START_SKIP = 500  # 10초 생략
 END_SKIP = 500  # 10초 생략
 
 OUTPUT_PATH = "data/frames"
-LABEL_PATH = "data/frames"
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 files = glob.glob(DATA_PATH)
