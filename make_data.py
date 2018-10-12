@@ -8,8 +8,10 @@ from tqdm import tqdm, trange
 
 QUEUE_SIZE = 50
 DATA_PATH = "data/gopro2/*.mp4"
+
 # 영상이 중간에 끊기면 코덱 문제이므로 ffmpeg로 mute 해야 합니다.
-# ffmpeg -i test.mp4 -c copy -an test_mute.mp4
+# Linux: ffmpeg -i test.mp4 -c copy -an test_mute.mp4
+# Windows: ffmpeg.exe -i test.mp4 -c copy -an test_mute.mp4
 
 START_SKIP = 500  # 10초 생략
 END_SKIP = 500  # 10초 생략
