@@ -4,7 +4,9 @@ import glob
 from generator import Generator
 from keras.callbacks import TensorBoard, ModelCheckpoint
 
-BATCH_SIZE = 8
+TRAIN = "H:/Workspaces/Walk-Assistant/data/frames"
+
+BATCH_SIZE = 1
 
 HEIGHT = 720
 WIDTH = 1280
@@ -27,7 +29,7 @@ else:
 
 my_model = MyModel(load, HEIGHT, WIDTH, KERNEL, STRIDE, lr=1e-6, model_name='main')
 
-gen = Generator('data/frames', tile_row=TILE_ROW, tile_col=TILE_COL, batch_size=BATCH_SIZE)
+gen = Generator(TRAIN, tile_row=TILE_ROW, tile_col=TILE_COL, batch_size=BATCH_SIZE)
 
 checkpoint_path = 'models/main/model.{epoch:02d}-{acc:.2f}.h5'
 checkpoint = ModelCheckpoint(checkpoint_path, monitor='acc', save_best_only=False, mode='auto', save_weights_only=False)

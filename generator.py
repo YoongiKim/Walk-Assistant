@@ -11,7 +11,7 @@ class Generator:
         self.data_dir = data_dir
         self.batch_size = batch_size
 
-        self.files, self.labels = self.read_label_file('{}/label.txt'.format(data_dir), h=tile_row, w=tile_col)
+        self.files, self.labels = self.read_label_file('{}/annotation.txt'.format(data_dir), h=tile_row, w=tile_col)
 
     def read_label_file(self, path, h, w):
         with open(path, 'r') as f:

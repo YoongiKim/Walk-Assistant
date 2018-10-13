@@ -21,7 +21,7 @@ from keras import Sequential
 from keras import layers
 from keras.layers import Reshape, Conv2D, MaxPool2D, UpSampling2D, Lambda, Input, Dense, GlobalAveragePooling2D, Flatten
 from keras.layers import TimeDistributed as Dist
-from keras.layers import BatchNormalization, Activation, DepthwiseConv2D, Bidirectional
+from keras.layers import BatchNormalization, Activation, DepthwiseConv2D, Bidirectional, CuDNNLSTM
 from keras.layers.core import Activation, Reshape, Permute
 from keras.optimizers import Adam
 from keras import Model
@@ -127,6 +127,7 @@ class MyModel:
         x = Dist(Activation('relu'))(x)
 
         x = Dist(Flatten())(x)
+        x = Bidirectional(CuDNNLSTM(32, return_sequences=True))(x)
         x = Dist(Dense(2, activation='softmax'))(x)
         x = Reshape([out_height, out_width, 2])(x)
 
