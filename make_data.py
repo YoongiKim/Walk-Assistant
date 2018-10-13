@@ -7,7 +7,7 @@ import threading
 from tqdm import tqdm, trange
 
 QUEUE_SIZE = 50
-DATA_PATH = "data/videos/*.mp4"
+DATA_PATH = "H:/Workspaces/Walk-Assistant/data/videos/*.mp4"
 
 # 영상이 중간에 끊기면 코덱 문제이므로 ffmpeg로 mute 해야 합니다.
 # Linux: ffmpeg -i data/videos/test.mp4 -c copy -an data/videos/test_mute.mp4
@@ -16,7 +16,7 @@ DATA_PATH = "data/videos/*.mp4"
 START_SKIP = 500  # 10초 생략
 END_SKIP = 500  # 10초 생략
 
-OUTPUT_PATH = "data/frames"
+OUTPUT_PATH = "H:/Workspaces/Walk-Assistant/data/frames"
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 files = glob.glob(DATA_PATH)
@@ -26,6 +26,7 @@ flow = OptFlow(height_start=0.5, height_end=1.0)
 label_lines = []
 
 for file in files:
+    print(file)
     file_name = str(file).replace('\\', '/').split('/')[-1].replace('.mp4', '')
 
     cap = cv2.VideoCapture(file)
@@ -48,7 +49,7 @@ for file in files:
             flow_queue.append((x, y))
 
             if len(img_queue) >= QUEUE_SIZE:
-                pop_img = img_queue.pop(0)
+                pop_img = cv2.resize(img_queue.pop(0), (1280, 720))
                 pop_flow = flow_queue.pop(0)
 
                 # way_visual = flow.draw_way(pop_img, flow_queue, size=40)

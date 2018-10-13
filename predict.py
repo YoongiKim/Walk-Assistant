@@ -81,7 +81,7 @@ for i in tqdm(range(0, total)):
         img = np.array([img])/255.0
         
         res = my_model.model.predict(img)[0]  # (batch, 9, 16, 2)
-        res = np.squeeze(res[:, :, 1])  # (9, 16, 1)
+        res = np.squeeze(res[:, :, 1])  # (9, 16)
 
         res *= 255  # to image 8 bit scale
         # res = brighter(res, 2.0, 255)

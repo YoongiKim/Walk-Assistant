@@ -4,9 +4,10 @@ import glob
 import numpy as np
 import random
 import os
+from model import MyModel
 
 PATH = "H:/Workspaces/Walk-Assistant/data/frames"
-ANNOTATION_FILE = "data/annotation.txt"
+ANNOTATION_FILE = "H:/Workspaces/Walk-Assistant/data/frames/annotation.txt"
 KERNEL = 80
 SHAPE = (9, 16)
 HEIGHT = 720
@@ -49,6 +50,8 @@ def click(event, x, y, flags, param):
 def visualize(img):
     global grid
 
+    grid = np.round(grid)
+
     h, w, c = img.shape
     box = np.zeros((h, w), dtype=np.uint8)
     for i in range(len(grid)):
@@ -84,6 +87,7 @@ def read_label():
     return files, lines
 
 def write_label(file_name, grid):
+    grid = np.round(grid).astype(np.uint8)
     flat = np.array(grid).flatten()
     encode = ''
     label = ''
@@ -98,7 +102,15 @@ def write_label(file_name, grid):
         f.writelines(labels)
         print('Saved label file')
 
+def predict(img, my_model):
+    img = np.array([img])/255.0
+    res = my_model.model.predict(img)[0]
+    res = np.squeeze(res[:,:,1])  # (9, 16)
+    return res
+
 if __name__ == '__main__':
+    model = MyModel(True, HEIGHT, WIDTH, KERNEL, KERNEL, 1e-6, 'main')
+
     files = glob.glob('{}/*.jpg'.format(PATH))
 
     prev_files, prev_lines = read_label()
@@ -113,9 +125,9 @@ if __name__ == '__main__':
         if file_name in prev_files:
             continue
 
-        grid = np.zeros_like(grid)
-
         img = cv2.imread(file)
+
+        grid = predict(img, model)
 
         cv2.namedWindow('img')
         cv2.setMouseCallback('img', click)
