@@ -1,0 +1,10 @@
+requests==2.18.1
+numpy==1.15.2
+tensorflow_gpu==1.11.0
+opencv_python==3.4.3.18
+scikit_image==0.14.1
+Keras==2.2.4
+tqdm==4.26.0
+matplotlib==3.0.0
+skimage==0.0
+
