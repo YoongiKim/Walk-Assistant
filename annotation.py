@@ -115,7 +115,8 @@ if __name__ == '__main__':
 
     prev_files, prev_lines = read_label()
     labels = prev_lines
-    print(prev_files, prev_lines)
+    print('Previous annotations: {}'.format(len(prev_files)))
+    print(prev_files)
 
     random.shuffle(files)
 

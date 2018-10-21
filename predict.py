@@ -87,8 +87,8 @@ for i in tqdm(range(0, total)):
         # res = brighter(res, 2.0, 255)
         res = res.astype(np.uint8)
         if FILTER:
-            _, res = cv2.threshold(res, 128, 255, cv2.THRESH_TOZERO)
-            res = Filter.remove_small_objects(res, 3)
+            # _, res = cv2.threshold(res, 128, 255, cv2.THRESH_TOZERO)
+            res = Filter.remove_small_objects(res, 10)
         
         res = cv2.cvtColor(res, cv2.COLOR_GRAY2BGR)  # to white color
         res[:, :, 0] = 0  # remove blue channel

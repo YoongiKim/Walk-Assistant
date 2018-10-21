@@ -34,7 +34,6 @@ for index, tile in enumerate(tiles):
     # plt.imshow(tile)
     # plt.show()
     plt.imsave('data/tiles/%d_%.2f.jpg'%(index, probs[index]), tile)
-
 visual = res*255.0
 visual = np.array(cv2.resize(visual, (1280, 720))).astype(np.uint8)
 visual = cv2.cvtColor(visual, cv2.COLOR_GRAY2BGR)
