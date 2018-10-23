@@ -44,13 +44,14 @@ TILE_COL = int((WIDTH-KERNEL)/STRIDE+1)
 print('Load last trained model? (y/n) Default= y')
 answer = input()
 
-load = False
+load = True
 
-if answer == 'y':
+if answer == 'n':
+    load = False
+    print('Building new model...')
+else:
     load = True
     print('Loading model...')
-else:
-    print('Building new model...')
 
 my_model = MyModel(load, HEIGHT, WIDTH, KERNEL, STRIDE, lr=1e-3, model_name='main')
 

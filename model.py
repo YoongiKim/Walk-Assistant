@@ -65,13 +65,15 @@ class MyModel:
         self.lr = lr
         self.model_name = model_name
         self.epoch = 0
+        self.kernel = kernel
+        self.stride = stride
 
         DataLoader.mkdir('models/{}'.format(self.model_name))
 
         if self.load:
             self.model = self.load_model()
         else:
-            self.model = self.build_simple_model(kernel, stride)
+            self.model = self.build_simple_model(self.kernel, self.stride)
 
         opt = Adam(lr=lr)
         self.model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['acc'])
@@ -83,6 +85,13 @@ class MyModel:
     def load_model(self):
         # model.99-0.98.h5
         files = glob.glob('models/{}/model.*.h5'.format(self.model_name))
+
+        if len(files) == 0:
+            print('Trained model not found from "models/{}/model.*.h5"'.format(self.model_name))
+            print('Building new model because model file not found...')
+
+            return self.build_simple_model(self.kernel, self.stride)
+
         last_file = max(files, key=os.path.getctime)
 
         file_name = last_file.replace('\\', '/').split('/')[-1].replace('model.', '').replace('.h5', '')
