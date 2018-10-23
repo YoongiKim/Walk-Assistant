@@ -1,10 +1,35 @@
+"""
+Walk-Assistant : Recognizing sidewalk for the visually impaired
+Copyright (C) 2018 Yoongi Kim (devlifecode@outlook.com)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+print("""
+    Walk-Assistant Copyright (C) 2018 Yoongi Kim
+    This program comes with ABSOLUTELY NO WARRANTY.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions.
+""")
+
+
 import tensorflow as tf
 from model import MyModel
 import glob
 from generator import Generator
 from keras.callbacks import TensorBoard, ModelCheckpoint
 
-TRAIN = "H:/Workspaces/Walk-Assistant/data/frames"
+TRAIN = "data/frames"
 
 BATCH_SIZE = 1
 
@@ -16,7 +41,7 @@ STRIDE = 80
 TILE_ROW = int((HEIGHT-KERNEL)/STRIDE+1)
 TILE_COL = int((WIDTH-KERNEL)/STRIDE+1)
 
-print('Load Model? (y/n)')
+print('Load last trained model? (y/n) Default= y')
 answer = input()
 
 load = False

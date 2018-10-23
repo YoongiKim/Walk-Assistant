@@ -16,12 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+
 import tensorflow as tf
 from keras import Sequential
 from keras import layers
 from keras.layers import Reshape, Conv2D, MaxPool2D, UpSampling2D, Lambda, Input, Dense, GlobalAveragePooling2D, Flatten
 from keras.layers import TimeDistributed as Dist
-from keras.layers import BatchNormalization, Activation, DepthwiseConv2D, Bidirectional, CuDNNLSTM
+from keras.layers import BatchNormalization, Activation, DepthwiseConv2D, Bidirectional, CuDNNLSTM, LSTM
 from keras.layers.core import Activation, Reshape, Permute
 from keras.optimizers import Adam
 from keras import Model

@@ -1,3 +1,22 @@
+"""
+Walk-Assistant : Recognizing sidewalk for the visually impaired
+Copyright (C) 2018 Yoongi Kim (devlifecode@outlook.com)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+
 from opt_flow import OptFlow
 import glob
 import cv2
@@ -16,7 +35,7 @@ DATA_PATH = "data/videos/*.mp4"
 START_SKIP = 500  # 10초 생략
 END_SKIP = 500  # 10초 생략
 
-OUTPUT_PATH = "H:/Workspaces/Walk-Assistant/data/frames"
+OUTPUT_PATH = "data/frames"
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 files = glob.glob(DATA_PATH)

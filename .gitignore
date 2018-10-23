@@ -111,3 +111,4 @@ output/*
 *.mp4
 logs/*
 !data/test.mp4
+deeplab_v3
