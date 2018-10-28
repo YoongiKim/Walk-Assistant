@@ -46,6 +46,9 @@ from tqdm import tqdm
 from filter import Filter
 from data_loader import DataLoader
 from keras.models import load_model
+from keras.backend.tensorflow_backend import set_session
+
+Graph = None
 
 class MyModel:
     def __init__(self, load, height, width, kernel, stride, lr, model_name):
@@ -83,6 +86,13 @@ class MyModel:
         print('Saved model')
 
     def load_model(self):
+        global Graph  # multiprocess-able
+
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        config.gpu_options.per_process_gpu_memory_fraction = 0.3
+        set_session(tf.Session(config=config))
+
         # model.99-0.98.h5
         files = glob.glob('models/{}/model.*.h5'.format(self.model_name))
 
@@ -101,9 +111,19 @@ class MyModel:
         with CustomObjectScope({'relu6': tf.nn.relu6, 'DepthwiseConv2D': keras.layers.DepthwiseConv2D, 'tf': tf}):
             model = load_model(last_file)
 
+        Graph = tf.get_default_graph()
+
         print('Loaded last model - {}, epoch: {}, acc: {}'.format(last_file, self.epoch, acc))
 
         return model
+
+    def predict(self, X):  # multiprocess-able
+        global Graph
+
+        with Graph.as_default():
+            Y = self.model.predict(X)
+
+        return Y
 
     def build_simple_model(self, kernel=80, stride=80):
         i = Input(batch_shape=(None, self.height, self.width, 3))
