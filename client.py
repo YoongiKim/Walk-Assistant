@@ -1,8 +1,35 @@
+"""
+Walk-Assistant : Recognizing sidewalk for the visually impaired
+Copyright (C) 2018 Yoongi Kim (devlifecode@outlook.com)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+print("""
+    Walk-Assistant Copyright (C) 2018 Yoongi Kim
+    This program comes with ABSOLUTELY NO WARRANTY.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions.
+""")
+
+
 import requests
 import json
 import cv2
 import base64
 import numpy as np
+
+img_file = 'data/test2.jpg'
 
 addr = 'http://127.0.0.1'
 test_url = addr + '/predict'
@@ -45,7 +72,7 @@ def render(img, res):
     #     exit(1)
 
 if __name__ == '__main__':
-    img = cv2.imread('data/test1.jpg')
+    img = cv2.imread(img_file)
     _, img_encoded = cv2.imencode('.jpg', img)
     b64 = base64.b64encode(img_encoded)
 
