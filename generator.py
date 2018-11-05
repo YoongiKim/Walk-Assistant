@@ -26,11 +26,11 @@ import cv2
 
 
 class Generator:
-    def __init__(self, data_dir, tile_row=9, tile_col=16, batch_size=32):
+    def __init__(self, data_dir, label_path, tile_row=9, tile_col=16, batch_size=32):
         self.data_dir = data_dir
         self.batch_size = batch_size
 
-        self.files, self.labels = self.read_label_file('{}/annotation.txt'.format(data_dir), h=tile_row, w=tile_col)
+        self.files, self.labels = self.read_label_file(label_path, h=tile_row, w=tile_col)
 
     def read_label_file(self, path, h, w):
         with open(path, 'r') as f:
@@ -78,7 +78,7 @@ class Generator:
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    gen = Generator('D:/Walk-Assistant/frames', batch_size=1)
+    gen = Generator('D:/Walk-Assistant/frames', 'D:/Walk-Assistant/label.txt', batch_size=1)
 
     for x, y in gen.generator():
         print(x)

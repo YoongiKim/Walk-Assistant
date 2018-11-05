@@ -36,6 +36,7 @@ START_SKIP = 500  # 10초 생략
 END_SKIP = 500  # 10초 생략
 
 OUTPUT_PATH = "data/frames"
+LABEL_PATH = "data/opt_flow.txt"
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 files = glob.glob(DATA_PATH)
@@ -105,16 +106,16 @@ for file in files:
 print('Processed %d frames' % len(label_lines))
 
 last_labels = []
-if os.path.exists('{}/label.txt'.format(OUTPUT_PATH)):
+if os.path.exists(LABEL_PATH):
     print('Found existing label file. Appending labels...')
-    with open('{}/label.txt'.format(OUTPUT_PATH), 'r') as p:
+    with open(LABEL_PATH, 'r') as p:
         last_labels = p.readlines()
 
 total_labels = last_labels + label_lines
 set_labels = set(total_labels)
 print('Found %d duplicated labels' % (len(total_labels) - len(set_labels)))
 
-with open('{}/label.txt'.format(OUTPUT_PATH), 'w') as f:
+with open(LABEL_PATH, 'w') as f:
     f.writelines(set_labels)
 
 print('Saved %d labels' % len(set_labels))

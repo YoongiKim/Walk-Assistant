@@ -30,8 +30,8 @@ import random
 import os
 from model import MyModel
 
-PATH = "data/frames"
-ANNOTATION_FILE = "data/frames/annotation.txt"
+PATH = "H:/Workspaces/Walk-Assistant/data/frames"
+ANNOTATION_FILE = "data/label.txt"
 KERNEL = 80
 SHAPE = (9, 16)
 HEIGHT = 720
