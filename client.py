@@ -37,6 +37,12 @@ test_url = addr + '/predict'
 WIDTH = 1280
 HEIGHT = 720
 
+def encode_image(img):
+    _, img_encoded = cv2.imencode('.jpg', img)
+    b64 = base64.b64encode(img_encoded)
+
+    return b64
+
 def decode_result(s):
     arr = []
 
@@ -73,10 +79,9 @@ def render(img, res):
 
 if __name__ == '__main__':
     img = cv2.imread(img_file)
-    _, img_encoded = cv2.imencode('.jpg', img)
-    b64 = base64.b64encode(img_encoded)
 
-    response = requests.post(test_url, data={"img": b64})
+    encode = encode_image(img)
+    response = requests.post(test_url, data={"img": encode})
 
     result = json.loads(response.text)['result']
     print(result)

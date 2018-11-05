@@ -50,6 +50,11 @@ def encode_result(arr):
     return encode[:-1]
 
 class Predict(Resource):
+    """
+    post (base64 encoded): { "img":"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wB..." }
+    receive:{ "result": "0.97,0.99,1.00,0.07,0.35,1.00,1.00,1.00,1.00,1.00,0.99,0.01,0.00,0.00,0.02,0.32\n0.01,..." ,
+    "status": "OK" }
+    """
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('img', type=str)
@@ -72,4 +77,4 @@ class Predict(Resource):
 api.add_resource(Predict, '/predict')
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=80)
+    app.run(host='127.0.0.1', port=8080)
