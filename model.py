@@ -76,7 +76,7 @@ class MyModel:
         if self.load:
             self.model = self.load_model()
         else:
-            self.model = self.build_simple_model(self.kernel, self.stride)
+            self.model = self.build_model(self.kernel, self.stride)
 
         opt = Adam(lr=lr)
         self.model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['acc'])
@@ -100,7 +100,7 @@ class MyModel:
             print('Trained model not found from "models/{}/model.*.h5"'.format(self.model_name))
             print('Building new model because model file not found...')
 
-            return self.build_simple_model(self.kernel, self.stride)
+            return self.build_model(self.kernel, self.stride)
 
         last_file = max(files, key=os.path.getctime)
 
@@ -125,7 +125,7 @@ class MyModel:
 
         return Y
 
-    def build_simple_model(self, kernel=80, stride=80):
+    def build_model(self, kernel=80, stride=80):
         i = Input(batch_shape=(None, self.height, self.width, 3))
         x = Lambda(lambda x: tf.extract_image_patches(
             x, ksizes=[1, kernel, kernel, 1], strides=[1, stride, stride, 1], rates=[1, 1, 1, 1], padding='VALID'))(i)
@@ -157,7 +157,8 @@ class MyModel:
         x = Dist(Activation('relu'))(x)
 
         x = Dist(Flatten())(x)
-        x = Bidirectional(CuDNNLSTM(32, return_sequences=True))(x)
+        x = Bidirectional(CuDNNLSTM(64, return_sequences=True))(x)
+        x = Bidirectional(CuDNNLSTM(64, return_sequences=True))(x)
         x = Dist(Dense(2, activation='softmax'))(x)
         x = Reshape([out_height, out_width, 2])(x)
 
@@ -167,26 +168,26 @@ class MyModel:
 
         return model
 
-    def build_model(self, kernel=80, stride=80):
-        i = Input(batch_shape=(None, self.height, self.width, 3))
-        x = Lambda(lambda x: tf.extract_image_patches(
-            x, ksizes=[1, kernel, kernel, 1], strides=[1, stride, stride, 1], rates=[1, 1, 1, 1], padding='VALID'))(i)
-
-        out_width = int((self.width - kernel) / stride + 1)
-        out_height = int((self.height - kernel) / stride + 1)
-        print(out_height, out_width)
-
-        x = Reshape([out_height, out_width, kernel, kernel, 3])(x)
-        x = Reshape([out_height * out_width, kernel, kernel, 3])(x)
-
-        x = mobilenet_v2.MobileNetv2(x)
-
-        x = Dist(GlobalAveragePooling2D())(x)
-        x = Dist(Dense(2, activation='softmax'))(x)
-        x = Reshape([out_height, out_width, 2])(x)
-
-        model = Model(inputs=[i], outputs=[x])
-
-        model.summary()
-
-        return model
+    # def build_model(self, kernel=80, stride=80):
+    #     i = Input(batch_shape=(None, self.height, self.width, 3))
+    #     x = Lambda(lambda x: tf.extract_image_patches(
+    #         x, ksizes=[1, kernel, kernel, 1], strides=[1, stride, stride, 1], rates=[1, 1, 1, 1], padding='VALID'))(i)
+    #
+    #     out_width = int((self.width - kernel) / stride + 1)
+    #     out_height = int((self.height - kernel) / stride + 1)
+    #     print(out_height, out_width)
+    #
+    #     x = Reshape([out_height, out_width, kernel, kernel, 3])(x)
+    #     x = Reshape([out_height * out_width, kernel, kernel, 3])(x)
+    #
+    #     x = mobilenet_v2.MobileNetv2(x)
+    #
+    #     x = Dist(GlobalAveragePooling2D())(x)
+    #     x = Dist(Dense(2, activation='softmax'))(x)
+    #     x = Reshape([out_height, out_width, 2])(x)
+    #
+    #     model = Model(inputs=[i], outputs=[x])
+    #
+    #     model.summary()
+    #
+    #     return model

@@ -66,7 +66,7 @@ tb = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=
 
 my_model.model.fit_generator(train_gen.generator(),
                              steps_per_epoch=len(train_gen.files)//BATCH_SIZE,
-                             epochs=100,
+                             epochs=1000,
                              callbacks=[checkpoint, tb],
                              initial_epoch=my_model.epoch,
                              validation_data=valid_gen.generator(),
