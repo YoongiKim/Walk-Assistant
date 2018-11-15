@@ -29,8 +29,8 @@
         <h2>Walk-Assistant - 시각 장애인을 위한 보행로 인식</h2>
         <a href="https://github.com/YoongiKim/Walk-Assistant">https://github.com/YoongiKim/Walk-Assistant</a>
         <br/>
-
-        <p><a class="btn btn-primary btn-large" style="width: 300px; text-align: center;" onclick="Capture()">인식하기</a></p>
+        <br/>
+        <p><a id="btnCapture" class="btn btn-primary btn-large" style="width: 100%; font-size: 14pt; text-align: center;" onclick="Capture()">인식하기</a></p>
 
         <canvas id="canvas1" style="visibility: visible;"></canvas>
 
@@ -71,6 +71,7 @@
 
     let videoElement = document.querySelector('video');
     let videoSelect = document.querySelector('select#videoSource');
+    let btnCapture = document.getElementById('btnCapture');
     let canvas1 = document.getElementById('canvas1');
     let ctx = canvas1.getContext('2d');
     let Request = document.getElementById('Request');
@@ -146,6 +147,8 @@
     function Capture() {
         UpdateFrame();
 
+        btnCapture.innerHTML="Waiting for response...";
+
         let request_data = JSON.stringify({
             img: canvas1.toDataURL('image/jpeg', 0.92),
             save: cb_save.checked,
@@ -177,6 +180,8 @@
                 Response.innerText = res;
 
                 show(result);
+
+                btnCapture.innerHTML="인식하기";
             },
             error: function () {
                 alert('Server internal error');
