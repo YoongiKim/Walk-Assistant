@@ -111,6 +111,8 @@ class MyModel:
         with CustomObjectScope({'relu6': tf.nn.relu6, 'DepthwiseConv2D': keras.layers.DepthwiseConv2D, 'tf': tf}):
             model = load_model(last_file)
 
+        model.summary()
+
         Graph = tf.get_default_graph()
 
         print('Loaded last model - {}, epoch: {}, acc: {}'.format(last_file, self.epoch, acc))
