@@ -29,8 +29,15 @@ import cv2
 import base64
 import numpy as np
 from model import MyModel
+from flask_cors import CORS
+from flask import request
+import json
+import matplotlib.pyplot as plt
+import time
+import threading
 
 app = Flask(__name__)
+CORS(app)  # Cross Origin Resource Sharing (CORS)
 api = Api(app)
 
 my_model = MyModel(True, 720, 1280, 80, 80, 1e-3, 'main')  # load model
@@ -56,25 +63,38 @@ class Predict(Resource):
     "status": "OK" }
     """
     def post(self):
+        print(request.data)
+
         parser = reqparse.RequestParser()
         parser.add_argument('img', type=str)
+        parser.add_argument('save', type=str)
         args = parser.parse_args()
 
         img = args['img']
+        save = args['save']
+        img = str(img).replace('data:image/jpeg;base64,', '')
 
         jpg = base64.b64decode(img)
         jpg = np.fromstring(jpg, np.uint8)
-        rgb = cv2.imdecode(jpg, cv2.IMREAD_COLOR)
+        bgr = cv2.imdecode(jpg, cv2.IMREAD_COLOR)
+        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         rgb = cv2.resize(rgb, (1280, 720))
+
+        if str(save).lower() == 'true':
+            threading.Thread(target=plt.imsave, args=['history/{}.jpg'.format(time.time()), rgb]).start()
 
         X = np.array([rgb]) / 255.0
         result = my_model.predict(X)[0, :, :, 1]  # (batch, 9, 16, 2)
         encode = encode_result(result)
 
-        return jsonify({'result': encode, 'status': 'OK'})
+        data = {'result': encode, 'status': 'OK'}
+        js = json.dumps(data)
+
+        return js
 
 
-api.add_resource(Predict, '/predict')
+api.add_resource(Predict, '/walk')
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080)
+    context = ('ssl/cert.pem', 'ssl/privkey.pem')
+    app.run(host='0.0.0.0', port=8080, ssl_context=context)  # 0.0.0.0 is for external connection

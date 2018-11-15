@@ -44,3 +44,5 @@ toolz==0.9.0
 tqdm==4.28.1
 urllib3==1.24
 Werkzeug==0.14.1
+pyopenssl
+flask-cors

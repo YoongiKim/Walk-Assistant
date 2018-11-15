@@ -113,3 +113,5 @@ logs/*
 !data/test.mp4
 deeplab_v3
 env
+ssl/*
+history/*

@@ -48,6 +48,7 @@ def brighter(img, multiply, max_value):
 
 HEIGHT = 720
 WIDTH = 1280
+KERNEL = 80
 
 MODEL_NAME = 'main'
 
@@ -56,7 +57,7 @@ parser.add_argument('video', type=str, help='input video path')
 parser.add_argument('--out', type=str, default='output/output.avi', help='output video save path')
 parser.add_argument('--show', type=str, default='True', help='show real time video')
 parser.add_argument('--skip', type=int, default=4, help='skip frame to speed up')
-parser.add_argument('--filter', type=str, default='False', help='Filter sparse area')
+parser.add_argument('--filter', type=str, default='True', help='Filter sparse area')
 parser.add_argument('--model_name', type=str, default='main', help='model directory name under models.')
 args = parser.parse_args()
 
@@ -84,19 +85,29 @@ for i in tqdm(range(0, total)):
         res = my_model.model.predict(img)[0]  # (batch, 9, 16, 2)
         res = np.squeeze(res[:, :, 1])  # (9, 16)
 
-        res *= 255  # to image 8 bit scale
-        # res = brighter(res, 2.0, 255)
-        res = res.astype(np.uint8)
+        res = np.array(res * 255.0).astype(np.uint8)
+
         if FILTER:
             # _, res = cv2.threshold(res, 128, 255, cv2.THRESH_TOZERO)
             res = Filter.remove_small_objects(res, 10)
+
+        box = np.zeros((HEIGHT, WIDTH), dtype=np.float32)
+
+        for i in range(len(res)):
+            for j in range(len(res[i])):
+                if res[i][j] < 128:
+                    res[i][j] = 0
+
+                box[i * KERNEL: (i + 1) * KERNEL, j * KERNEL: (j + 1) * KERNEL] = res[i][j]
+
+        box = box.astype(np.uint8)
         
-        res = cv2.cvtColor(res, cv2.COLOR_GRAY2BGR)  # to white color
-        res[:, :, 0] = 0  # remove blue channel
-        res[:, :, 2] = 0  # remove red channel
-        res = cv2.resize(res, (WIDTH, HEIGHT), interpolation=cv2.INTER_LINEAR)  # resize 15x8 to 1280x720
+        box = cv2.cvtColor(box, cv2.COLOR_GRAY2BGR)  # to white color
+        box[:, :, 0] = 0  # remove blue channel
+        box[:, :, 2] = 0  # remove red channel
+
         org = cv2.resize(image, (WIDTH, HEIGHT))
-        added = cv2.add(org, res)  # combine input, output
+        added = cv2.add(org, box)  # combine input, output
 
         out.write(added)  # save video frame
         if SHOW:

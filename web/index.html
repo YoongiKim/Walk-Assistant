@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+    <title>Walk-Assistant</title>
+    <meta charset="utf-8">
+    <meta name="description" content="Walk-Assistant">
+    <meta name="author" content="Yoongi Kim">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta id="theme-color" name="theme-color" content="#fff">
+    <link rel="stylesheet" type="text/css" href="../assets/content/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../assets/content/site.css" />
+    <script src="../assets/scripts/modernizr-2.6.2.js"></script>
+    <base target="_blank">
+
+
+    <style>
+        div.select {
+            margin: 0 0 1em 0;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div>
+    <div id="container" style="width: auto; height: auto;">
+        <h2>Walk-Assistant - 시각 장애인을 위한 보행로 인식</h2>
+        <a href="https://github.com/YoongiKim/Walk-Assistant">https://github.com/YoongiKim/Walk-Assistant</a>
+        <br/>
+
+        <p><a class="btn btn-primary btn-large" style="width: 300px; text-align: center;" onclick="Capture()">인식하기</a></p>
+
+        <canvas id="canvas1" style="visibility: visible;"></canvas>
+
+        <video muted autoplay style="width: 90%; height: auto; display: block; margin: 0 auto;" onclick="Capture()"></video>
+        <br/>
+        <label for="cb_save" style="font-size: 14pt;">서버에 데이터 저장 허용</label>
+        <input type="checkbox" id="cb_save"/>
+
+        <br/>
+
+        <p>
+            <label for="Request">Requset [POST] https://www.lifecode.kr:8080/walk: </label>
+            <br/>
+            <textarea id="Request" rows="10" cols="300" style="max-width: 500px;"></textarea>
+            <br/>
+        </p>
+        <p>
+            <label for="Response">Response: </label>
+            <br/>
+            <textarea id="Response" rows="10" cols="300" style="max-width: 500px;"></textarea>
+            <br/>
+        </p>
+
+        <div class="select">
+            <label for="videoSource">Video source: </label><select id="videoSource"></select>
+        </div>
+
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2018 - Yoongi Kim (devlifecode@outlook.com)</p>
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+    "use strict";
+
+    let videoElement = document.querySelector('video');
+    let videoSelect = document.querySelector('select#videoSource');
+    let canvas1 = document.getElementById('canvas1');
+    let ctx = canvas1.getContext('2d');
+    let Request = document.getElementById('Request');
+    let Response = document.getElementById('Response');
+    let container = document.getElementById('container');
+    let cb_save = document.getElementById('cb_save');
+    container.style.width = window.innerWidth + "px";
+
+    navigator.mediaDevices.enumerateDevices()
+        .then(gotDevices).then(getStream).catch(handleError);
+
+    videoSelect.onchange = getStream;
+
+    function gotDevices(deviceInfos) {
+        for (let i = 0; i !== deviceInfos.length; ++i) {
+            let deviceInfo = deviceInfos[i];
+            let option = document.createElement('option');
+            option.value = deviceInfo.deviceId;
+            if (deviceInfo.kind === 'videoinput') {
+                option.text = deviceInfo.label || 'camera ' +
+                    (videoSelect.length + 1);
+                videoSelect.appendChild(option);
+            }
+        }
+        videoSelect.selectedIndex = videoSelect.length - 1;
+    }
+
+    function getStream() {
+        if (window.stream) {
+            window.stream.getTracks().forEach(function (track) {
+                track.stop();
+            });
+        }
+
+        let constraints = {
+            video: {
+                deviceId: {exact: videoSelect.value}
+            }
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(handleError);
+    }
+
+    function gotStream(stream) {
+        window.stream = stream; // make stream available to console
+        videoElement.srcObject = stream;
+    }
+
+    function handleError(error) {
+        console.log('Error: ', error);
+    }
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    function UpdateFrame() {
+        const ratio = 9/16;
+
+        let w = videoElement.videoWidth;
+        let h = videoElement.videoHeight;
+        let center_x = parseInt(w/2);
+        let center_y = parseInt(h/2);
+        let x1 = 0;
+        let y1 = center_y - w*(ratio)/2;
+
+        canvas1.width = w;
+        canvas1.height = w*(ratio);
+        ctx.drawImage(videoElement, x1, y1, w, w*(9/16), 0, 0, w, w*(9/16));
+    }
+
+    function Capture() {
+        UpdateFrame();
+
+        let request_data = JSON.stringify({
+            img: canvas1.toDataURL('image/jpeg', 0.92),
+            save: cb_save.checked,
+        });
+
+        Request.innerText = request_data;
+
+        $.ajax({
+            type: "POST",
+            url: 'https://www.lifecode.kr:8080/walk',
+            data: request_data,
+            dataType: 'json',
+            cors: true ,
+            contentType:'application/json',
+            secure: true,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Origin, Content-Type, X-Auth-Token',
+            },
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader ("Authorization", "Basic " + btoa(""));
+            },
+
+            success: function (res) {
+                let data = JSON.parse(res);
+                let result = data["result"];
+                let status = data["status"];
+                Response.innerText = res;
+
+                show(result);
+            },
+            error: function () {
+                alert('Server internal error');
+            },
+            complete: function () {
+                // 요청의 실패, 성공과 상관 없이 완료 될 경우 호출
+            }
+        });
+    }
+
+    function show(result)
+    {
+        let rows = result.split("\n");
+
+        let array = [];
+
+        for (let row of rows)
+        {
+            let array_line = [];
+
+            let cols = row.split(",");
+
+            for (let col of cols)
+                array_line.push(parseFloat(col));
+
+            array.push(array_line);
+        }
+        console.log(array);
+
+        let kernel = Math.floor(canvas1.width/16);
+        console.log(kernel);
+
+        for (let i=0; i < array.length; ++i)
+        {
+            for (let j=0; j < array[i].length; ++j)
+            {
+                ctx.fillStyle = "rgba(0, 255, 0, " + array[i][j] + ")";
+                ctx.fillRect(j*kernel, i*kernel, kernel, kernel);
+            }
+        }
+    }
+</script>
+
+<script src="../assets/scripts/jquery-1.10.2.js"></script>
+<script src="../assets/scripts/bootstrap.js"></script>
+<script src="../assets/scripts/respond.js"></script>
+</body>
+</html>

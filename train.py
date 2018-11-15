@@ -29,7 +29,9 @@ import glob
 from generator import Generator
 from keras.callbacks import TensorBoard, ModelCheckpoint
 
-TRAIN = "data/frames"
+PATH = "H:/Workspaces/Walk-Assistant/data/frames"
+TRAIN_LABEL = "data/label.txt"
+VAILD_LABEL = "data/valid.txt"
 
 BATCH_SIZE = 1
 
@@ -41,7 +43,7 @@ STRIDE = 80
 TILE_ROW = int((HEIGHT-KERNEL)/STRIDE+1)
 TILE_COL = int((WIDTH-KERNEL)/STRIDE+1)
 
-print('Load last trained model? (y/n) Default= y')
+print('Load last trained model? (y/n)')
 answer = input()
 
 load = True
@@ -55,10 +57,17 @@ else:
 
 my_model = MyModel(load, HEIGHT, WIDTH, KERNEL, STRIDE, lr=1e-3, model_name='main')
 
-gen = Generator(TRAIN, tile_row=TILE_ROW, tile_col=TILE_COL, batch_size=BATCH_SIZE)
+train_gen = Generator(PATH, TRAIN_LABEL, tile_row=TILE_ROW, tile_col=TILE_COL, batch_size=BATCH_SIZE)
+valid_gen = Generator(PATH, TRAIN_LABEL, tile_row=TILE_ROW, tile_col=TILE_COL, batch_size=BATCH_SIZE)
 
 checkpoint_path = 'models/main/model.{epoch:02d}-{acc:.2f}.h5'
 checkpoint = ModelCheckpoint(checkpoint_path, monitor='acc', save_best_only=False, mode='auto', save_weights_only=False)
 tb = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=True, write_images=True)
 
-my_model.model.fit_generator(gen.generator(), steps_per_epoch=len(gen.files)//BATCH_SIZE, epochs=10000, callbacks=[checkpoint, tb], initial_epoch=my_model.epoch)
+my_model.model.fit_generator(train_gen.generator(),
+                             steps_per_epoch=len(train_gen.files)//BATCH_SIZE,
+                             epochs=1000,
+                             callbacks=[checkpoint, tb],
+                             initial_epoch=my_model.epoch,
+                             validation_data=valid_gen.generator(),
+                             validation_steps=len(valid_gen.files)//BATCH_SIZE)
