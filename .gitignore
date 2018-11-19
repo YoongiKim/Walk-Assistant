@@ -115,3 +115,4 @@ deeplab_v3
 env
 ssl/*
 history/*
+data/frames/*

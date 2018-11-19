@@ -77,12 +77,19 @@ class Generator:
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    import shutil
+    import os
 
-    gen = Generator('D:/Walk-Assistant/frames', 'D:/Walk-Assistant/label.txt', batch_size=1)
+    gen = Generator('H:/Workspaces/Walk-Assistant/data/frames', 'data/label.txt', batch_size=1)
 
-    for x, y in gen.generator():
-        print(x)
-        plt.imshow(x[0])
-        plt.show()
-        print(y)
-        input()
+    for file in gen.files:
+        if os.path.exists(file):
+            shutil.copy2(file, 'data/frames')
+            print(file)
+
+    # for x, y in gen.generator():
+    #     print(x)
+    #     plt.imshow(x[0])
+    #     plt.show()
+    #     print(y)
+    #     input()

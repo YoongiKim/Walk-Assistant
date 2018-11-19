@@ -29,7 +29,7 @@ import glob
 from generator import Generator
 from keras.callbacks import TensorBoard, ModelCheckpoint
 
-PATH = "H:/Workspaces/Walk-Assistant/data/frames"
+PATH = "data/frames"
 TRAIN_LABEL = "data/label.txt"
 VAILD_LABEL = "data/valid.txt"
 
@@ -55,18 +55,18 @@ else:
     load = True
     print('Loading model...')
 
-my_model = MyModel(load, HEIGHT, WIDTH, KERNEL, STRIDE, lr=1e-3, model_name='main')
+my_model = MyModel(load, HEIGHT, WIDTH, KERNEL, STRIDE, lr=1e-4, model_name='main')
 
 train_gen = Generator(PATH, TRAIN_LABEL, tile_row=TILE_ROW, tile_col=TILE_COL, batch_size=BATCH_SIZE)
 valid_gen = Generator(PATH, TRAIN_LABEL, tile_row=TILE_ROW, tile_col=TILE_COL, batch_size=BATCH_SIZE)
 
-checkpoint_path = 'models/main/model.{epoch:02d}-{acc:.2f}.h5'
-checkpoint = ModelCheckpoint(checkpoint_path, monitor='acc', save_best_only=False, mode='auto', save_weights_only=False)
-tb = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=True, write_images=True)
+checkpoint_path = 'models/main/model.{epoch:02d}-{val_acc:.2f}.h5'
+checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_acc', save_best_only=False, mode='auto', save_weights_only=False)
+tb = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=BATCH_SIZE, write_graph=True, write_grads=True, write_images=True)
 
 my_model.model.fit_generator(train_gen.generator(),
                              steps_per_epoch=len(train_gen.files)//BATCH_SIZE,
-                             epochs=1000,
+                             epochs=100,
                              callbacks=[checkpoint, tb],
                              initial_epoch=my_model.epoch,
                              validation_data=valid_gen.generator(),
