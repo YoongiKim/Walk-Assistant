@@ -1,0 +1,3 @@
+[submodule "WalkAssistantClient"]
+	path = WalkAssistantClient
+	url = https://github.com/YoongiKim/WalkAssistantClient.git
